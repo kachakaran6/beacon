@@ -1,0 +1,8 @@
+name = "beacon-telemetry"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "beacon_telemetry_db"
+database_id = "your-d1-database-id"
