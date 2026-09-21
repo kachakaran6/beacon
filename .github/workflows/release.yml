@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Tag Matches package.json Version
+        shell: pwsh
+        run: |
+          $pkg = Get-Content package.json | ConvertFrom-Json
+          $tag = "${{ github.ref_name }}"
+          $expectedTag = "v$($pkg.version)"
+          Write-Host "Checking tag '$tag' against expected tag '$expectedTag'..."
+          if ($tag -ne $expectedTag) {
+            Write-Error "Release tag '$tag' does not match package.json version 'v$($pkg.version)'"
+            exit 1
+          }
+          Write-Host "Version validation successful: $tag"
+
+      - name: Unit Tests
+        run: npx vitest run
+
+      - name: Check Brand Integrity
+        run: npm run check:brand
+
+      - name: Build Web Assets
+        env:
+          BEACON_TELEMETRY_URL: ${{ vars.BEACON_TELEMETRY_URL }}
+        run: npm run build
+
+      - name: Build and Publish Electron Artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BEACON_TELEMETRY_URL: ${{ vars.BEACON_TELEMETRY_URL }}
+        run: npx electron-builder --win --publish always
