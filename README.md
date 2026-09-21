@@ -153,6 +153,9 @@ npm install
 npm run app:dev
 ```
 
+> [!NOTE]
+> `npm run app:dev` runs `electron.exe`, so some Windows shell surfaces (like the Alt+Tab preview or taskbar) may still show the Electron icon during development. The packaged build (`npm run app:build`) shows the official monochrome Beacon icon everywhere.
+
 ### Testing & Validation
 ```bash
 # Run Vitest unit & store tests
