@@ -227,4 +227,72 @@ test.describe.serial('Beacon Electron E2E Tests', () => {
     expect(bounds).toBeTruthy()
     expect(bounds?.x).toBeGreaterThan(500)
   })
+
+  test('10. Open then close 20 times: pill screen rect is invariant within 1px and state machine does not loop', async () => {
+    // Start collapsed
+    await window.evaluate(() => window.beacon?.test?.collapse())
+    await window.waitForTimeout(300)
+
+    for (let i = 0; i < 20; i++) {
+      // 1. Measure collapsed screen X
+      const collapsedInfo = await window.evaluate(() => {
+        const notch = document.querySelector('.notch')
+        const rect = notch ? notch.getBoundingClientRect() : null
+        return {
+          windowScreenX: window.screenX,
+          pillLeft: rect ? rect.left : 0,
+          pillScreenX: window.screenX + (rect ? rect.left : 0),
+        }
+      })
+
+      // 2. Trigger expand
+      await window.evaluate(() => window.beacon?.test?.expand('click'))
+      await window.waitForTimeout(250)
+
+      const smOpen = await window.evaluate(() => window.beacon?.test?.getStateMachine())
+      expect(smOpen?.state).toBe('open')
+      expect(smOpen?.isTransitioning).toBe(false)
+
+      // 3. Trigger collapse
+      await window.evaluate(() => window.beacon?.test?.collapse())
+      await window.waitForTimeout(250)
+
+      const afterCollapse = await window.evaluate(() => {
+        const notch = document.querySelector('.notch')
+        const rect = notch ? notch.getBoundingClientRect() : null
+        return {
+          pillScreenX: window.screenX + (rect ? rect.left : 0),
+        }
+      })
+
+      expect(Math.abs(afterCollapse.pillScreenX - collapsedInfo.pillScreenX)).toBeLessThanOrEqual(1)
+    }
+  })
+
+  test('11. Left and Right alignments maintain exact screen position invariance across open/close', async () => {
+    for (const align of ['left', 'right', 'center'] as const) {
+      await window.evaluate((a) => window.beacon?.test?.setNotchSettings({ displayId: null, align: a, offsetPx: 0 }), align)
+      await window.waitForTimeout(200)
+
+      const collapsed = await window.evaluate(() => {
+        const notch = document.querySelector('.notch')
+        const rect = notch ? notch.getBoundingClientRect() : null
+        return window.screenX + (rect ? rect.left : 0)
+      })
+
+      await window.evaluate(() => window.beacon?.test?.expand('click'))
+      await window.waitForTimeout(250)
+
+      await window.evaluate(() => window.beacon?.test?.collapse())
+      await window.waitForTimeout(250)
+
+      const after = await window.evaluate(() => {
+        const notch = document.querySelector('.notch')
+        const rect = notch ? notch.getBoundingClientRect() : null
+        return window.screenX + (rect ? rect.left : 0)
+      })
+
+      expect(Math.abs(after - collapsed)).toBeLessThanOrEqual(1)
+    }
+  })
 })

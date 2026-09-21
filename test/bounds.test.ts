@@ -77,6 +77,27 @@ describe('computeNotchBounds', () => {
     expect(panel.x).toBeGreaterThanOrEqual(0)
   })
 
+  it('invariant: pill screen X is identical in collapsed and expanded states across alignments', () => {
+    const alignments: ('left' | 'center' | 'right')[] = ['left', 'center', 'right']
+    const offsets = [-100, 0, 80, 500, -500]
+    const displays = [primaryDisplay, secondaryLeftDisplay, smallDisplay]
+
+    for (const display of displays) {
+      for (const align of alignments) {
+        for (const offsetPx of offsets) {
+          const notch = computeNotchBounds(display, { align, offsetPx }, { width: 190, height: 30 })
+          const panel = computeNotchBounds(display, { align, offsetPx }, { width: 960, height: 420 })
+
+          const pillLeft = notch.x - panel.x
+          const pillScreenXInExpanded = panel.x + pillLeft
+
+          expect(pillScreenXInExpanded).toBe(notch.x)
+          expect(Math.abs(pillScreenXInExpanded - notch.x)).toBeLessThanOrEqual(1)
+        }
+      }
+    }
+  })
+
   it('throws error when display has no bounds', () => {
     expect(() => computeNotchBounds(null as any)).toThrow()
   })

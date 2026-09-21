@@ -74,6 +74,20 @@ export interface UpdateStatus {
   error?: string
 }
 
+export interface LayoutPayload {
+  pillLeft: number
+  originX: number
+  expanded: boolean
+  openedBy?: string
+}
+
+export interface StateMachineInfo {
+  state: 'closed' | 'opening' | 'open' | 'closing'
+  isTransitioning: boolean
+  isPinned: boolean
+  hoverOpenedBy: string | null
+}
+
 export interface BeaconAPI {
   isElectron: true
   loadState: () => Promise<PersistedState | null>
@@ -93,13 +107,21 @@ export interface BeaconAPI {
   onShortcut: (callback: (command: string) => void) => () => void
   onWindowStateChanged?: (callback: (state: WindowStateChange) => void) => () => void
   onUpdateStatus?: (callback: (status: UpdateStatus) => void) => () => void
+  onLayoutApply?: (callback: (layout: LayoutPayload) => void) => () => void
+  ackLayout?: () => void
+  onOpenStart?: (callback: (data?: any) => void) => () => void
+  notifyOpenDone?: () => void
+  onCloseStart?: (callback: (data?: any) => void) => () => void
+  notifyCloseDone?: () => void
   test?: {
     getBounds: () => Promise<WindowBounds | null>
     sendShortcut: (command: string) => Promise<void>
-    expand: () => Promise<void>
+    expand: (by?: string) => Promise<void>
     collapse: () => Promise<void>
     isFocusable: () => Promise<boolean>
     setNotchSettings: (settings: NotchSettings) => Promise<void>
+    getStateMachine: () => Promise<StateMachineInfo | null>
+    simulateCursor: (point: { x: number; y: number }) => Promise<void>
   }
 }
 

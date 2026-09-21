@@ -220,10 +220,9 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('workspace')
   const [toastMsg, setToastMsg] = useState<{ text: string; action?: string; onAction?: () => void } | null>(null)
   const [clockStr, setClockStr] = useState(formatClock())
+  const [pillLeft, setPillLeft] = useState(0)
   const [originXRatio, setOriginXRatio] = useState(0.5)
   const animatingClose = useRef(false)
-  const hoverOpenTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const collapseSafetyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Store slices
   const isRunning = useStore((s) => s.isRunning)
@@ -231,7 +230,6 @@ export default function App() {
   const duration = useStore((s) => s.duration)
   const activeTaskId = useStore((s) => s.activeTaskId)
   const tasks = useStore((s) => s.tasks)
-  const openOnHover = useStore((s) => s.openOnHover)
   const telemetryConsent = useStore((s) => s.telemetryConsent)
 
   const activeTask =
@@ -261,6 +259,30 @@ export default function App() {
     return () => clearInterval(t)
   }, [isRunning])
 
+  // ── Input focus tracking for Main process hover guard ───────────────────────
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase()
+      if (tag === 'input' || tag === 'textarea') {
+        api()?.setInputFocused(true)
+      }
+    }
+    const onFocusOut = () => {
+      setTimeout(() => {
+        const activeTag = document.activeElement?.tagName?.toLowerCase()
+        if (activeTag !== 'input' && activeTag !== 'textarea') {
+          api()?.setInputFocused(false)
+        }
+      }, 50)
+    }
+    window.addEventListener('focusin', onFocusIn)
+    window.addEventListener('focusout', onFocusOut)
+    return () => {
+      window.removeEventListener('focusin', onFocusIn)
+      window.removeEventListener('focusout', onFocusOut)
+    }
+  }, [])
+
   // ── Before-quit flush ──────────────────────────────────────────────────────
   useEffect(() => {
     const handler = () => {
@@ -281,10 +303,33 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [open, appMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Shortcut & Window State listeners from main process ──────────────────
+  // ── Main Process Coordination & Paint Handshake ───────────────────────────
   useEffect(() => {
     const a = api()
     if (!a) return
+
+    const cleanupLayout = a.onLayoutApply?.((layout) => {
+      setPillLeft(layout.pillLeft)
+      setOriginXRatio(layout.originX)
+      // Wait for 2 requestAnimationFrames to guarantee layout paint
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          a.ackLayout?.()
+        })
+      })
+    })
+
+    const cleanupOpenStart = a.onOpenStart?.(() => {
+      animatingClose.current = false
+      setOpen(true)
+    })
+
+    const cleanupCloseStart = a.onCloseStart?.(() => {
+      if (appMode) return
+      animatingClose.current = true
+      setOpen(false)
+    })
+
     const cleanupShortcut = a.onShortcut((cmd) => {
       if (cmd === 'expand' || cmd === 'toggle-widget') {
         if (!open) openPanel('shortcut')
@@ -335,6 +380,9 @@ export default function App() {
     })
 
     return () => {
+      cleanupLayout?.()
+      cleanupOpenStart?.()
+      cleanupCloseStart?.()
       cleanupShortcut()
       cleanupState?.()
       cleanupUpdates?.()
@@ -343,55 +391,23 @@ export default function App() {
 
   // ── Window expand / collapse interop ───────────────────────────────────────
   function openPanel(by: string = 'click') {
-    if (hoverOpenTimer.current) {
-      clearTimeout(hoverOpenTimer.current)
-      hoverOpenTimer.current = null
-    }
     animatingClose.current = false
-    setOpen(true)
     api()?.expand(by)
   }
 
   function closePanel() {
     if (animatingClose.current || appMode) return
-    animatingClose.current = true
-    setOpen(false)
-    if (collapseSafetyTimer.current) clearTimeout(collapseSafetyTimer.current)
-    collapseSafetyTimer.current = setTimeout(() => {
-      if (!appMode) {
-        api()?.collapse()
-        animatingClose.current = false
-      }
-    }, 220)
+    api()?.collapse()
   }
 
   function onPanelExitComplete() {
-    if (collapseSafetyTimer.current) {
-      clearTimeout(collapseSafetyTimer.current)
-      collapseSafetyTimer.current = null
-    }
     if (!open && !appMode) {
-      api()?.collapse()
+      api()?.notifyCloseDone?.()
       animatingClose.current = false
     }
   }
 
   const showToast = useCallback((text: string) => setToastMsg({ text }), [])
-
-  // ── Hover to open handlers ─────────────────────────────────────────────────
-  function handleNotchPointerEnter() {
-    if (open || !openOnHover || appMode) return
-    hoverOpenTimer.current = setTimeout(() => {
-      openPanel('hover')
-    }, 200)
-  }
-
-  function handleNotchPointerLeave() {
-    if (hoverOpenTimer.current) {
-      clearTimeout(hoverOpenTimer.current)
-      hoverOpenTimer.current = null
-    }
-  }
 
   // ── Notch content ──────────────────────────────────────────────────────────
   const notchContent = () => {
@@ -410,10 +426,12 @@ export default function App() {
       {!open && !appMode && (
         <button
           className="notch"
+          style={{
+            left: `${pillLeft}px`,
+            transform: 'none',
+          }}
           aria-label="Open Beacon"
           onClick={() => openPanel('click')}
-          onPointerEnter={handleNotchPointerEnter}
-          onPointerLeave={handleNotchPointerLeave}
           onContextMenu={(e) => {
             e.preventDefault()
           }}

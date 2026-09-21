@@ -48,14 +48,38 @@ const api = {
     return () => ipcRenderer.removeListener('updates:status', listener)
   },
 
+  // Paint-synced handshake for seamless, jump-free open/close morph
+  onLayoutApply: (callback) => {
+    const listener = (_event, layout) => callback(layout)
+    ipcRenderer.on('layout:apply', listener)
+    return () => ipcRenderer.removeListener('layout:apply', listener)
+  },
+  ackLayout: () => ipcRenderer.send('layout:ack'),
+
+  onOpenStart: (callback) => {
+    const listener = (_event, data) => callback(data)
+    ipcRenderer.on('open:start', listener)
+    return () => ipcRenderer.removeListener('open:start', listener)
+  },
+  notifyOpenDone: () => ipcRenderer.send('open:done'),
+
+  onCloseStart: (callback) => {
+    const listener = (_event, data) => callback(data)
+    ipcRenderer.on('close:start', listener)
+    return () => ipcRenderer.removeListener('close:start', listener)
+  },
+  notifyCloseDone: () => ipcRenderer.send('close:done'),
+
   // Test-only (gated by BEACON_TEST=1 or test mode in main process)
   test: {
     getBounds: () => ipcRenderer.invoke('test:get-bounds'),
     sendShortcut: (command) => ipcRenderer.invoke('test:send-shortcut', command),
-    expand: () => ipcRenderer.invoke('test:expand'),
+    expand: (by) => ipcRenderer.invoke('test:expand', by),
     collapse: () => ipcRenderer.invoke('test:collapse'),
     isFocusable: () => ipcRenderer.invoke('test:is-focusable'),
     setNotchSettings: (settings) => ipcRenderer.invoke('test:set-notch-settings', settings),
+    getStateMachine: () => ipcRenderer.invoke('test:get-state-machine'),
+    simulateCursor: (point) => ipcRenderer.invoke('test:simulate-cursor', point),
   },
 }
 
