@@ -92,7 +92,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^10.0.5",
     "cross-env": "^10.1.0",
-    "electron": "41.3.0",
+    "electron": "44.4.3",
     "electron-builder": "^26.15.3",
     "oxlint": "^1.81.0",
     "playwright": "^1.58.2",
