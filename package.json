@@ -1,0 +1,107 @@
+{
+  "name": "beacon",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A glanceable desktop productivity island for Windows",
+  "author": "kachakaran6",
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "app:dev": "concurrently -k \"cross-env BROWSER=none vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "app:build": "npm run build && electron-builder",
+    "lint": "oxlint",
+    "check:brand": "node scripts/check-brand.js",
+    "test": "vitest run && playwright test",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "release:patch": "npm version patch -m \"chore(release): v%s\" && git push origin main --follow-tags",
+    "release:minor": "npm version minor -m \"chore(release): v%s\" && git push origin main --follow-tags",
+    "release:major": "npm version major -m \"chore(release): v%s\" && git push origin main --follow-tags",
+    "preview": "vite preview"
+  },
+  "build": {
+    "appId": "com.kachakaran6.beacon",
+    "productName": "Beacon",
+    "directories": {
+      "output": "release"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "kachakaran6",
+        "repo": "beacon",
+        "releaseType": "release"
+      }
+    ],
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "build/icon.ico",
+      "package.json"
+    ],
+    "icon": "build/icon.ico",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "artifactName": "Beacon-Setup-${version}.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Beacon"
+    },
+    "portable": {
+      "artifactName": "Beacon-${version}-portable.${ext}"
+    }
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "clsx": "^2.1.1",
+    "electron-store": "^11.0.2",
+    "electron-updater": "^6.3.9",
+    "framer-motion": "^13.4.0",
+    "lucide-react": "^1.47.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwind-merge": "^3.7.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0",
+    "electron": "41.3.0",
+    "electron-builder": "^26.15.3",
+    "oxlint": "^1.81.0",
+    "playwright": "^1.58.2",
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.4",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^4.1.0",
+    "wait-on": "^9.1.0"
+  }
+}
