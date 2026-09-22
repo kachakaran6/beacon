@@ -36,6 +36,8 @@ export type Store = PersistedState & {
   toggleTask: (id: string) => void
   deleteTask: (id: string) => void
   editTask: (id: string, patch: Partial<Pick<Task, 'title' | 'priority' | 'estimate' | 'reminder'>>) => void
+  reorderTasks: (fromIndex: number, toIndex: number) => void
+  moveTask: (id: string, direction: 'up' | 'down') => void
   setActive: (id: string | null) => void
 
   // Timer actions
@@ -175,6 +177,33 @@ export const useStore = create<Store>((set) => ({
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
     })),
+
+  reorderTasks: (fromIndex, toIndex) =>
+    set((s) => {
+      const pending = s.tasks.filter((t) => !t.completed)
+      const completed = s.tasks.filter((t) => t.completed)
+      if (fromIndex < 0 || fromIndex >= pending.length || toIndex < 0 || toIndex >= pending.length) {
+        return s
+      }
+      const nextPending = [...pending]
+      const [moved] = nextPending.splice(fromIndex, 1)
+      nextPending.splice(toIndex, 0, moved)
+      return { tasks: [...nextPending, ...completed] }
+    }),
+
+  moveTask: (id, direction) =>
+    set((s) => {
+      const pending = s.tasks.filter((t) => !t.completed)
+      const completed = s.tasks.filter((t) => t.completed)
+      const idx = pending.findIndex((t) => t.id === id)
+      if (idx === -1) return s
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1
+      if (targetIdx < 0 || targetIdx >= pending.length) return s
+      const nextPending = [...pending]
+      const [moved] = nextPending.splice(idx, 1)
+      nextPending.splice(targetIdx, 0, moved)
+      return { tasks: [...nextPending, ...completed] }
+    }),
 
   setActive: (activeTaskId) => set({ activeTaskId }),
 

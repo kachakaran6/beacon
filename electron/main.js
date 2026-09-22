@@ -521,7 +521,9 @@ function createWindow() {
   const distPath = path.join(__dirname, '../dist/index.html')
   if (isDev && !isTest && !process.env.LOAD_DIST) {
     mainWindow.loadURL('http://127.0.0.1:5173').catch(() => {
-      if (fs.existsSync(distPath)) mainWindow.loadFile(distPath)
+      if (mainWindow && !mainWindow.isDestroyed() && fs.existsSync(distPath)) {
+        mainWindow.loadFile(distPath)
+      }
     })
   } else {
     mainWindow.loadFile(distPath)

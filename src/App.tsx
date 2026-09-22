@@ -22,6 +22,7 @@ import './App.css'
 import { DotMatrix } from './components/DotMatrix'
 import { CompanionEyes } from './components/CompanionEyes'
 import { getTheme, THEME_LIST } from './themes'
+import type { ThemeId } from './themes'
 import {
   DEFAULT_NOTCH_SOURCE_ORDER,
   evaluateNotchContent,
@@ -69,6 +70,214 @@ function formatDate(ts: number | null): string {
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10)
+}
+
+function playNotificationChime(type: 'event' | 'timer' = 'event') {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioCtx) return
+    const ctx = new AudioCtx()
+    const now = ctx.currentTime
+
+    if (type === 'event') {
+      const osc1 = ctx.createOscillator()
+      const gain1 = ctx.createGain()
+      osc1.type = 'sine'
+      osc1.frequency.setValueAtTime(523.25, now)
+      gain1.gain.setValueAtTime(0.15, now)
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4)
+      osc1.connect(gain1)
+      gain1.connect(ctx.destination)
+      osc1.start(now)
+      osc1.stop(now + 0.4)
+
+      const osc2 = ctx.createOscillator()
+      const gain2 = ctx.createGain()
+      osc2.type = 'sine'
+      osc2.frequency.setValueAtTime(783.99, now + 0.15)
+      gain2.gain.setValueAtTime(0.2, now + 0.15)
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.7)
+      osc2.connect(gain2)
+      gain2.connect(ctx.destination)
+      osc2.start(now + 0.15)
+      osc2.stop(now + 0.7)
+    } else {
+      const freqs = [659.25, 783.99, 1046.5]
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        const startTime = now + idx * 0.12
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(freq, startTime)
+        gain.gain.setValueAtTime(0.18, startTime)
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start(startTime)
+        osc.stop(startTime + 0.5)
+      })
+    }
+  } catch {
+    // Ignore audio context errors
+  }
+}
+
+// ─── Floating Context Menu Component ──────────────────────────────────────────
+
+function ContextMenu({
+  x,
+  y,
+  onClose,
+  showToast,
+  onSelectTab,
+}: {
+  x: number
+  y: number
+  onClose: () => void
+  showToast: (m: string) => void
+  onSelectTab: (tab: Tab) => void
+}) {
+  const menuRef = useRef<HTMLDivElement>(null)
+  const isRunning = useStore((s) => s.isRunning)
+  const theme = useStore((s) => s.theme) ?? 'classic'
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('pointerdown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onClose])
+
+  const left = Math.min(x, Math.max(10, window.innerWidth - 230))
+  const top = Math.min(y, Math.max(10, window.innerHeight - 360))
+
+  return (
+    <motion.div
+      ref={menuRef}
+      className="beacon-context-menu"
+      style={{ left, top }}
+      initial={{ opacity: 0, scale: 0.94, y: -4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.94, y: -4 }}
+      transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="ctx-group-label">Quick Actions</div>
+      <button
+        className="ctx-item"
+        onClick={() => {
+          onClose()
+          onSelectTab('workspace')
+          setTimeout(() => {
+            const input = document.querySelector<HTMLInputElement>('#task-input')
+            input?.focus()
+          }, 100)
+        }}
+      >
+        <PlusIcon size={13} />
+        <span>Add Task</span>
+        <span className="ctx-shortcut">Ctrl+Alt+N</span>
+      </button>
+
+      <button
+        className="ctx-item"
+        onClick={() => {
+          onClose()
+          useStore.getState().toggleTimer()
+          showToast(isRunning ? 'Timer paused' : 'Timer started')
+        }}
+      >
+        {isRunning ? <PauseIcon size={13} /> : <PlayIcon size={13} />}
+        <span>{isRunning ? 'Pause Focus Timer' : 'Start Focus Timer'}</span>
+        <span className="ctx-shortcut">Ctrl+Alt+P</span>
+      </button>
+
+      <button
+        className="ctx-item"
+        onClick={() => {
+          onClose()
+          onSelectTab('workspace')
+          setTimeout(() => {
+            const textarea = document.querySelector<HTMLTextAreaElement>('.notepad-textarea')
+            textarea?.focus()
+          }, 100)
+        }}
+      >
+        <PencilIcon size={13} />
+        <span>Quick Notepad</span>
+      </button>
+
+      <div className="ctx-divider" />
+
+      <div className="ctx-group-label">Notch Alignment</div>
+      <div className="ctx-row-btns">
+        {(['left', 'center', 'right'] as NotchAlign[]).map((align) => (
+          <button
+            key={align}
+            className="ctx-mini-btn"
+            onClick={() => {
+              useStore.getState().setNotchSettings({ align })
+              onClose()
+            }}
+          >
+            {align.charAt(0).toUpperCase() + align.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      <div className="ctx-divider" />
+
+      <div className="ctx-group-label">Notch Theme</div>
+      <div className="ctx-theme-pills">
+        {(['classic', 'mono', 'amber', 'sage', 'rosewood'] as ThemeId[]).map((tId) => (
+          <button
+            key={tId}
+            className={`ctx-theme-pill ${theme === tId ? 'active' : ''}`}
+            onClick={() => {
+              useStore.getState().setTheme(tId)
+              onClose()
+            }}
+          >
+            {tId.charAt(0).toUpperCase() + tId.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      <div className="ctx-divider" />
+
+      <button
+        className="ctx-item"
+        onClick={() => {
+          onClose()
+          api()?.openApp()
+        }}
+      >
+        <ExternalLinkIcon size={13} />
+        <span>Open Standalone App</span>
+      </button>
+
+      <button
+        className="ctx-item ctx-item--close"
+        onClick={() => {
+          onClose()
+          api()?.collapse()
+        }}
+      >
+        <XIcon size={13} />
+        <span>Hide Panel</span>
+        <span className="ctx-shortcut">Esc</span>
+      </button>
+    </motion.div>
+  )
 }
 
 // ─── Toast Component ──────────────────────────────────────────────────────────
@@ -176,10 +385,15 @@ export default function App() {
     return () => unsub?.()
   }, [])
 
-  // ── Track session finish for Companion celebratory squint ───────────────────
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
+  const notifiedEventsRef = useRef<Set<string>>(new Set())
+
+  // ── Track session finish for Companion celebratory squint & chime ────────────
   useEffect(() => {
     if (sessions > prevSessions.current) {
       setSessionJustFinished(true)
+      playNotificationChime('timer')
+      api()?.notify('🎉 Session Completed!', 'Great focus session finished!')
       const t = setTimeout(() => setSessionJustFinished(false), 1800)
       prevSessions.current = sessions
       return () => clearTimeout(t)
@@ -187,9 +401,30 @@ export default function App() {
     prevSessions.current = sessions
   }, [sessions])
 
-  // ── Clock tick ─────────────────────────────────────────────────────────────
+  // ── Clock tick & Event Alarms ────────────────────────────────────────────────
   useEffect(() => {
-    const t = setInterval(() => setClockStr(formatClock()), 5_000)
+    const checkEventsAndTick = () => {
+      const nowStr = formatClock()
+      setClockStr(nowStr)
+
+      const today = todayStr()
+      const events = useStore.getState().events.filter((e) => e.date === today)
+
+      events.forEach((ev) => {
+        if (ev.start && ev.start === nowStr) {
+          const key = `${ev.id}_${ev.start}`
+          if (!notifiedEventsRef.current.has(key)) {
+            notifiedEventsRef.current.add(key)
+            api()?.notify(`🔔 Event Reminder: ${ev.title}`, `Event starting at ${ev.start}`)
+            setToastMsg({ text: `🔔 Event starting now: ${ev.title}` })
+            playNotificationChime('event')
+          }
+        }
+      })
+    }
+
+    checkEventsAndTick()
+    const t = setInterval(checkEventsAndTick, 3_000)
     return () => clearInterval(t)
   }, [])
 
@@ -395,6 +630,7 @@ export default function App() {
           onClick={() => openPanel('click')}
           onContextMenu={(e) => {
             e.preventDefault()
+            setContextMenuPos({ x: e.clientX, y: e.clientY })
           }}
         >
           {isRunning && (
@@ -492,7 +728,7 @@ export default function App() {
             onContextMenu={(e) => {
               if (!appMode) {
                 e.preventDefault()
-                closePanel()
+                setContextMenuPos({ x: e.clientX, y: e.clientY })
               }
             }}
           >
@@ -585,6 +821,19 @@ export default function App() {
           />
         )}
       </AnimatePresence>
+
+      {/* Context Menu */}
+      <AnimatePresence>
+        {contextMenuPos && (
+          <ContextMenu
+            x={contextMenuPos.x}
+            y={contextMenuPos.y}
+            onClose={() => setContextMenuPos(null)}
+            showToast={showToast}
+            onSelectTab={setTab}
+          />
+        )}
+      </AnimatePresence>
     </main>
   )
 }
@@ -610,6 +859,8 @@ function TasksCard({ showToast }: { showToast: (m: string) => void }) {
   const [input, setInput] = useState('')
   const [menuId, setMenuId] = useState<string | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const pending = tasks.filter((t) => !t.completed)
@@ -630,6 +881,14 @@ function TasksCard({ showToast }: { showToast: (m: string) => void }) {
 
   function handleBlur() {
     api()?.setInputFocused(false)
+  }
+
+  function handleDrop(targetIdx: number) {
+    if (draggedIdx !== null && draggedIdx !== targetIdx) {
+      useStore.getState().reorderTasks(draggedIdx, targetIdx)
+    }
+    setDraggedIdx(null)
+    setDragOverIdx(null)
   }
 
   return (
@@ -662,15 +921,29 @@ function TasksCard({ showToast }: { showToast: (m: string) => void }) {
           </div>
         )}
 
-        {pending.map((task) => (
+        {pending.map((task, idx) => (
           <TaskRow
             key={task.id}
+            index={idx}
             task={task}
             isActive={task.id === activeTaskId}
             menuOpen={menuId === task.id}
             onMenuToggle={() => setMenuId(menuId === task.id ? null : task.id)}
             onMenuClose={() => setMenuId(null)}
             showToast={showToast}
+            isDragging={draggedIdx === idx}
+            isDragOver={dragOverIdx === idx}
+            onDragStart={(i) => setDraggedIdx(i)}
+            onDragOver={(i, e) => {
+              e.preventDefault()
+              setDragOverIdx(i)
+            }}
+            onDragLeave={() => setDragOverIdx(null)}
+            onDrop={(i) => handleDrop(i)}
+            onDragEnd={() => {
+              setDraggedIdx(null)
+              setDragOverIdx(null)
+            }}
           />
         ))}
 
@@ -712,19 +985,35 @@ function TasksCard({ showToast }: { showToast: (m: string) => void }) {
 }
 
 function TaskRow({
+  index,
   task,
   isActive,
   menuOpen,
   onMenuToggle,
   onMenuClose,
   showToast,
+  isDragging,
+  isDragOver,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
 }: {
+  index?: number
   task: Task
   isActive: boolean
   menuOpen: boolean
   onMenuToggle: () => void
   onMenuClose: () => void
   showToast: (m: string) => void
+  isDragging?: boolean
+  isDragOver?: boolean
+  onDragStart?: (i: number) => void
+  onDragOver?: (i: number, e: React.DragEvent) => void
+  onDragLeave?: () => void
+  onDrop?: (i: number) => void
+  onDragEnd?: () => void
 }) {
   const rowRef = useRef<HTMLDivElement>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -778,9 +1067,35 @@ function TaskRow({
   return (
     <div
       ref={rowRef}
+      draggable={!task.completed && index !== undefined}
+      onDragStart={(e) => {
+        if (!task.completed && index !== undefined && onDragStart) {
+          e.dataTransfer.effectAllowed = 'move'
+          onDragStart(index)
+        }
+      }}
+      onDragOver={(e) => {
+        if (!task.completed && index !== undefined && onDragOver) {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'move'
+          onDragOver(index, e)
+        }
+      }}
+      onDragLeave={() => {
+        if (onDragLeave) onDragLeave()
+      }}
+      onDrop={(e) => {
+        if (!task.completed && index !== undefined && onDrop) {
+          e.preventDefault()
+          onDrop(index)
+        }
+      }}
+      onDragEnd={() => {
+        if (onDragEnd) onDragEnd()
+      }}
       className={`task-row ${task.completed ? 'task-row--done' : ''} ${
         isActive ? 'task-row--active' : ''
-      }`}
+      } ${isDragging ? 'task-row--dragging' : ''} ${isDragOver ? 'task-row--drag-over' : ''}`}
       role="listitem"
     >
       <div className="task-grip-wrap" aria-hidden="true">
@@ -872,6 +1187,28 @@ function TaskRow({
           >
             <PencilIcon size={12} strokeWidth={1.75} /> Edit title
           </button>
+          {!task.completed && (
+            <>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  useStore.getState().moveTask(task.id, 'up')
+                  onMenuClose()
+                }}
+              >
+                <ChevronUpIcon size={12} strokeWidth={1.75} /> Move up
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  useStore.getState().moveTask(task.id, 'down')
+                  onMenuClose()
+                }}
+              >
+                <ChevronDownIcon size={12} strokeWidth={1.75} /> Move down
+              </button>
+            </>
+          )}
           <button role="menuitem" onClick={() => handleSetPriority('high')}>
             Priority: High
           </button>
@@ -1212,7 +1549,10 @@ function EventsCard({ showToast }: { showToast: (m: string) => void }) {
         )}
 
         {todayEvents.map((ev) => (
-          <div key={ev.id} className="event-row">
+          <div
+            key={ev.id}
+            className={`event-row ${isHappeningNow(ev) ? 'event-row--now-alarm' : ''}`}
+          >
             <div className="event-info">
               <span className="event-name" title={ev.title}>
                 {ev.title}
@@ -1708,7 +2048,7 @@ function SettingsTab({ showToast }: { showToast: (m: string) => void }) {
           <div className="setting-card updates-card">
             <div className="updates-info">
               <div>
-                <strong className="app-version">Beacon v1.0.0</strong>
+                <strong className="app-version">Beacon v2.0.4</strong>
                 <span className="update-status-msg">
                   {updateStatus.status === 'checking'
                     ? 'Checking for updates…'

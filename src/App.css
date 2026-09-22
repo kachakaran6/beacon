@@ -1613,3 +1613,159 @@ button {
   color: #777777;
 }
 
+/* ─── Task Drag & Drop Reordering ─────────────────────────────────────────── */
+.task-row {
+  transition: transform 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.task-row--dragging {
+  opacity: 0.4;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.task-row--drag-over {
+  border-top: 2px solid #111111 !important;
+}
+
+.task-grip {
+  cursor: grab;
+}
+
+.task-row:active .task-grip {
+  cursor: grabbing;
+}
+
+/* ─── Event Alarm Pulse ────────────────────────────────────────────────────── */
+@keyframes alarmPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(180, 68, 60, 0.6); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px 4px rgba(180, 68, 60, 0.4); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(180, 68, 60, 0); }
+}
+
+.event-row--now-alarm {
+  animation: alarmPulse 2s infinite ease-in-out;
+  background: rgba(180, 68, 60, 0.12);
+  border-radius: 8px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.badge--now {
+  background: var(--color-overdue);
+  color: #FFFFFF;
+  animation: alarmPulse 1.5s infinite ease-in-out;
+}
+
+/* ─── Professional Floating Context Menu ───────────────────────────────────── */
+.beacon-context-menu {
+  position: fixed;
+  z-index: 99999;
+  width: 220px;
+  background: rgba(18, 18, 20, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #ECECEC;
+  font-size: 12px;
+}
+
+.ctx-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888888;
+  padding: 4px 8px 2px 8px;
+}
+
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #ECECEC;
+  font-size: 12px;
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.ctx-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.ctx-shortcut {
+  margin-left: auto;
+  font-size: 10px;
+  color: #888888;
+}
+
+.ctx-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
+}
+
+.ctx-row-btns {
+  display: flex;
+  gap: 4px;
+  padding: 2px 4px;
+}
+
+.ctx-mini-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #CCCCCC;
+  font-size: 11px;
+  padding: 4px 0;
+  text-align: center;
+}
+
+.ctx-mini-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+}
+
+.ctx-theme-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 4px;
+}
+
+.ctx-theme-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #CCCCCC;
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.ctx-theme-pill:hover,
+.ctx-theme-pill.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+.ctx-item--close {
+  color: #F87171;
+}
+
+.ctx-item--close:hover {
+  background: rgba(248, 113, 113, 0.15);
+  color: #FCA5A5;
+}
+
