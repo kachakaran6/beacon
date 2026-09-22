@@ -27,6 +27,10 @@ export type NotchSettings = {
   offsetPx: number
 }
 
+export type ThemeId = 'classic' | 'amber' | 'ice' | 'forest' | 'sunset' | 'violet' | 'system'
+export type NotchSourceId = 'clock' | 'timer' | 'task' | 'streak' | 'companion' | 'none'
+export type NotchContentMode = 'smart' | 'cycle'
+
 export type PersistedState = {
   tasks: Task[]
   activeTaskId: string | null
@@ -41,6 +45,12 @@ export type PersistedState = {
   openOnHover: boolean
   autoHideNotch: boolean
   notch?: NotchSettings
+  theme?: ThemeId
+  notchContentMode?: NotchContentMode
+  notchSources?: NotchSourceId[]
+  notchSourceOrder?: NotchSourceId[]
+  notchCycleInterval?: number
+  reduceAnimations?: boolean
   telemetryConsent?: boolean | null
   telemetryInstallId?: string
   autoUpdate?: boolean
@@ -102,6 +112,7 @@ export interface BeaconAPI {
   openExternal: (url: string) => void
   getDisplays: () => Promise<DisplayInfo[]>
   setNotchPosition: (settings: NotchSettings) => Promise<void>
+  getAccentColor?: () => Promise<string | null>
   checkForUpdates: () => Promise<UpdateStatus>
   quitAndInstallUpdate: () => Promise<void>
   onShortcut: (callback: (command: string) => void) => () => void

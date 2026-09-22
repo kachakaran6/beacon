@@ -17,6 +17,7 @@ const api = {
   // Displays & Notch Positioning
   getDisplays: () => ipcRenderer.invoke('displays:get'),
   setNotchPosition: (settings) => ipcRenderer.invoke('notch:set-position', settings),
+  getAccentColor: () => ipcRenderer.invoke('system:get-accent-color'),
 
   // Auto-update
   checkForUpdates: () => ipcRenderer.invoke('updates:check'),
