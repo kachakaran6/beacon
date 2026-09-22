@@ -390,7 +390,6 @@ export default function App() {
             left: `${pillLeft}px`,
             transform: 'none',
             background: currentTheme.background,
-            boxShadow: `0 0 10px ${currentTheme.glow}`,
           }}
           aria-label="Open Beacon"
           onClick={() => openPanel('click')}
@@ -1476,33 +1475,35 @@ function SettingsTab({ showToast }: { showToast: (m: string) => void }) {
                 </div>
               </div>
 
-              {/* Swatch row showing dotLit + background */}
+              {/* Redesigned Swatch Row showing rounded-square dots-on-background with small-caps name */}
               <div className="theme-swatch-row" role="radiogroup" aria-label="Notch Color Themes">
                 {THEME_LIST.map((thId) => {
                   const th = getTheme(thId, systemAccent)
                   const isActive = theme === thId
                   return (
-                    <button
-                      key={thId}
-                      className={`theme-swatch-btn ${isActive ? 'active' : ''}`}
-                      style={{
-                        background: th.background,
-                        borderColor: isActive ? th.accent : 'transparent',
-                      }}
-                      onClick={() => useStore.getState().setTheme(thId)}
-                      title={th.name}
-                      aria-label={`Theme: ${th.name}`}
-                      role="radio"
-                      aria-checked={isActive}
-                    >
-                      <span
-                        className="swatch-inner-dot"
+                    <div key={thId} className={`theme-swatch-item ${isActive ? 'active' : ''}`}>
+                      <button
+                        className={`theme-swatch-btn ${isActive ? 'active' : ''}`}
                         style={{
-                          background: th.dotLit,
-                          boxShadow: `0 0 4px ${th.glow}`,
+                          background: th.background,
                         }}
-                      />
-                    </button>
+                        onClick={() => useStore.getState().setTheme(thId)}
+                        title={th.name}
+                        aria-label={`Theme: ${th.name}`}
+                        role="radio"
+                        aria-checked={isActive}
+                      >
+                        <div className="swatch-dots-grid">
+                          <span className="swatch-grid-dot" style={{ background: th.dotLit }} />
+                          <span className="swatch-grid-dot" style={{ background: th.dotUnlit }} />
+                          <span className="swatch-grid-dot" style={{ background: th.dotLit }} />
+                          <span className="swatch-grid-dot" style={{ background: th.dotUnlit }} />
+                          <span className="swatch-grid-dot" style={{ background: th.dotLit }} />
+                          <span className="swatch-grid-dot" style={{ background: th.dotUnlit }} />
+                        </div>
+                      </button>
+                      <span className="theme-swatch-label">{th.name}</span>
+                    </div>
                   )
                 })}
               </div>
