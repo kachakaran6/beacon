@@ -1,7 +1,7 @@
 {
   "name": "beacon",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A glanceable desktop productivity island for Windows",
   "author": "kachakaran6",
   "type": "module",
@@ -19,7 +19,9 @@
     "release:patch": "npm version patch -m \"chore(release): v%s\" && git push origin main --follow-tags",
     "release:minor": "npm version minor -m \"chore(release): v%s\" && git push origin main --follow-tags",
     "release:major": "npm version major -m \"chore(release): v%s\" && git push origin main --follow-tags",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "landing:dev": "cd landing && npm install && npm run dev",
+    "landing:build": "cd landing && npm install && npm run build"
   },
   "build": {
     "appId": "com.kachakaran6.beacon",
