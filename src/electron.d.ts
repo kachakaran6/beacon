@@ -55,6 +55,7 @@ export type PersistedState = {
   events: CalEvent[]
   launchAtStartup: boolean
   openOnHover: boolean
+  hoverCloseDelay?: number
   autoHideNotch: boolean
   notch?: NotchSettings
   theme?: ThemeId

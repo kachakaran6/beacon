@@ -398,8 +398,9 @@ function startCursorPoll() {
 
       if (!insidePanelWithHysteresis) {
         if (!hoverCloseTimer) {
-          hoverCloseTimer = setTimeout(() => {
-            hoverCloseTimer = null
+          const state = store.get('state')
+          const delayMs = state?.hoverCloseDelay !== undefined ? Number(state.hoverCloseDelay) : 300
+          if (delayMs <= 0) {
             if (
               machineState === 'open' &&
               !isTransitioning &&
@@ -409,7 +410,20 @@ function startCursorPoll() {
             ) {
               transitionToClose('hover-exit')
             }
-          }, 600)
+          } else {
+            hoverCloseTimer = setTimeout(() => {
+              hoverCloseTimer = null
+              if (
+                machineState === 'open' &&
+                !isTransitioning &&
+                hoverOpenedBy === 'hover' &&
+                !isPinned &&
+                !inputFocused
+              ) {
+                transitionToClose('hover-exit')
+              }
+            }, delayMs)
+          }
         }
       } else {
         if (hoverCloseTimer) {

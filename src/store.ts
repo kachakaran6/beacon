@@ -55,6 +55,7 @@ export type Store = PersistedState & {
   // Settings
   setLaunchAtStartup: (v: boolean) => void
   setOpenOnHover: (v: boolean) => void
+  setHoverCloseDelay: (ms: number) => void
   setAutoHideNotch: (v: boolean) => void
   setNotchSettings: (patch: Partial<NotchSettings>) => void
   setTheme: (theme: ThemeId) => void
@@ -93,6 +94,7 @@ export const INITIAL_STATE: PersistedState = {
   events: [],
   launchAtStartup: false,
   openOnHover: true,
+  hoverCloseDelay: 300,
   autoHideNotch: false,
   notch: DEFAULT_NOTCH,
   theme: 'mono',
@@ -232,8 +234,9 @@ export const useStore = create<Store>((set) => ({
       events: s.events.filter((e) => e.id !== id),
     })),
 
-  setLaunchAtStartup: (launchAtStartup) => set({ launchAtStartup }),
+  setLaunchAtStartup: (launchAtStartup: boolean) => set({ launchAtStartup }),
   setOpenOnHover: (openOnHover) => set({ openOnHover }),
+  setHoverCloseDelay: (hoverCloseDelay) => set({ hoverCloseDelay }),
   setAutoHideNotch: (autoHideNotch) => set({ autoHideNotch }),
 
   setNotchSettings: (patch) =>
@@ -320,6 +323,7 @@ export function getPersistPayload(state: Store): PersistedState {
     events: state.events,
     launchAtStartup: state.launchAtStartup,
     openOnHover: state.openOnHover,
+    hoverCloseDelay: state.hoverCloseDelay ?? 300,
     autoHideNotch: state.autoHideNotch,
     notch: state.notch ?? DEFAULT_NOTCH,
     theme: state.theme ?? 'classic',

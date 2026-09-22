@@ -1306,6 +1306,7 @@ function InsightsTab() {
 function SettingsTab({ showToast }: { showToast: (m: string) => void }) {
   const launchAtStartup = useStore((s) => s.launchAtStartup)
   const openOnHover = useStore((s) => s.openOnHover)
+  const hoverCloseDelay = useStore((s) => s.hoverCloseDelay) ?? 300
   const autoHideNotch = useStore((s) => s.autoHideNotch)
   const notch = useStore((s) => s.notch) ?? DEFAULT_NOTCH
   const theme = useStore((s) => s.theme) ?? 'classic'
@@ -1539,6 +1540,43 @@ function SettingsTab({ showToast }: { showToast: (m: string) => void }) {
               <span className="switch-knob" />
             </button>
           </div>
+
+          {openOnHover && (
+            <div className="setting-card" style={{ marginTop: 8, padding: '10px 12px' }}>
+              <div className="setting-row-top">
+                <div>
+                  <span className="setting-title">Hover Auto-Close Delay</span>
+                  <span className="setting-desc" style={{ display: 'block', marginTop: 2 }}>
+                    {hoverCloseDelay === 0
+                      ? 'Instant: Closes immediately when cursor leaves'
+                      : hoverCloseDelay === 300
+                      ? 'Standard: 0.3s delay before closing'
+                      : hoverCloseDelay === 1000
+                      ? 'Relaxed: 1.0s delay before closing'
+                      : 'Extended: 2.0s delay before closing'}
+                  </span>
+                </div>
+                <div className="segmented segmented--small" role="tablist">
+                  {[
+                    { label: 'Instant', ms: 0 },
+                    { label: '0.3s', ms: 300 },
+                    { label: '1.0s', ms: 1000 },
+                    { label: '2.0s', ms: 2000 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.ms}
+                      role="tab"
+                      aria-selected={hoverCloseDelay === opt.ms}
+                      className={`segmented-tab ${hoverCloseDelay === opt.ms ? 'active' : ''}`}
+                      onClick={() => useStore.getState().setHoverCloseDelay(opt.ms)}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="setting-row">
             <div className="setting-text">
