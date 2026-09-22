@@ -1,7 +1,31 @@
 import { create } from 'zustand'
-import type { CalEvent, DisplayInfo, NotchAlign, NotchSettings, PersistedState, Priority, Task, UpdateStatus } from './electron'
+import type {
+  CalEvent,
+  DisplayInfo,
+  NotchAlign,
+  NotchContentMode,
+  NotchSettings,
+  NotchSourceId,
+  PersistedState,
+  Priority,
+  Task,
+  ThemeId,
+  UpdateStatus,
+} from './electron'
 
-export type { CalEvent, DisplayInfo, NotchAlign, NotchSettings, PersistedState, Priority, Task, UpdateStatus }
+export type {
+  CalEvent,
+  DisplayInfo,
+  NotchAlign,
+  NotchContentMode,
+  NotchSettings,
+  NotchSourceId,
+  PersistedState,
+  Priority,
+  Task,
+  ThemeId,
+  UpdateStatus,
+}
 
 export type Store = PersistedState & {
   hydrated: boolean
@@ -33,6 +57,12 @@ export type Store = PersistedState & {
   setOpenOnHover: (v: boolean) => void
   setAutoHideNotch: (v: boolean) => void
   setNotchSettings: (patch: Partial<NotchSettings>) => void
+  setTheme: (theme: ThemeId) => void
+  setNotchContentMode: (mode: NotchContentMode) => void
+  toggleNotchSource: (source: NotchSourceId) => void
+  reorderNotchSources: (order: NotchSourceId[]) => void
+  setNotchCycleInterval: (seconds: number) => void
+  setReduceAnimations: (reduce: boolean) => void
   setTelemetryConsent: (consent: boolean) => void
   resetTelemetryInstallId: () => void
   setAutoUpdate: (v: boolean) => void
@@ -65,6 +95,12 @@ export const INITIAL_STATE: PersistedState = {
   openOnHover: true,
   autoHideNotch: false,
   notch: DEFAULT_NOTCH,
+  theme: 'classic',
+  notchContentMode: 'smart',
+  notchSources: ['clock', 'timer'],
+  notchSourceOrder: ['clock', 'timer', 'task', 'streak', 'companion'],
+  notchCycleInterval: 5,
+  reduceAnimations: false,
   telemetryConsent: null,
   telemetryInstallId: '',
   autoUpdate: true,
@@ -207,6 +243,24 @@ export const useStore = create<Store>((set) => ({
       return { notch: nextNotch }
     }),
 
+  setTheme: (theme) => set({ theme }),
+  setNotchContentMode: (notchContentMode) => set({ notchContentMode }),
+  toggleNotchSource: (source) =>
+    set((s) => {
+      const current = s.notchSources ?? ['clock', 'timer']
+      if (source === 'none') {
+        return { notchSources: ['none'] }
+      }
+      const withoutNone = current.filter((src) => src !== 'none')
+      const exists = withoutNone.includes(source)
+      const next = exists ? withoutNone.filter((src) => src !== source) : [...withoutNone, source]
+      return { notchSources: next }
+    }),
+  reorderNotchSources: (notchSourceOrder) => set({ notchSourceOrder }),
+  setNotchCycleInterval: (notchCycleInterval) =>
+    set({ notchCycleInterval: Math.max(3, Math.min(10, notchCycleInterval)) }),
+  setReduceAnimations: (reduceAnimations) => set({ reduceAnimations }),
+
   setTelemetryConsent: (telemetryConsent) =>
     set((s) => {
       const installId = s.telemetryInstallId || generateId()
@@ -227,6 +281,13 @@ export const useStore = create<Store>((set) => ({
         ...s,
         ...saved,
         notch,
+        theme: saved.theme ?? s.theme ?? 'classic',
+        notchContentMode: saved.notchContentMode ?? s.notchContentMode ?? 'smart',
+        notchSources: saved.notchSources ?? s.notchSources ?? ['clock', 'timer'],
+        notchSourceOrder:
+          saved.notchSourceOrder ?? s.notchSourceOrder ?? ['clock', 'timer', 'task', 'streak', 'companion'],
+        notchCycleInterval: saved.notchCycleInterval ?? s.notchCycleInterval ?? 5,
+        reduceAnimations: saved.reduceAnimations ?? s.reduceAnimations ?? false,
         telemetryInstallId: installId,
         hydrated: true,
       }
@@ -261,6 +322,12 @@ export function getPersistPayload(state: Store): PersistedState {
     openOnHover: state.openOnHover,
     autoHideNotch: state.autoHideNotch,
     notch: state.notch ?? DEFAULT_NOTCH,
+    theme: state.theme ?? 'classic',
+    notchContentMode: state.notchContentMode ?? 'smart',
+    notchSources: state.notchSources ?? ['clock', 'timer'],
+    notchSourceOrder: state.notchSourceOrder ?? ['clock', 'timer', 'task', 'streak', 'companion'],
+    notchCycleInterval: state.notchCycleInterval ?? 5,
+    reduceAnimations: state.reduceAnimations ?? false,
     telemetryConsent: state.telemetryConsent,
     telemetryInstallId: state.telemetryInstallId,
     autoUpdate: state.autoUpdate,

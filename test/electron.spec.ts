@@ -295,4 +295,86 @@ test.describe.serial('Beacon Electron E2E Tests', () => {
       expect(Math.abs(after - collapsed)).toBeLessThanOrEqual(1)
     }
   })
+
+  test('12. Theme switch updates notch instantly and persists', async () => {
+    // Expand window first
+    await window.evaluate(() => window.beacon?.test?.expand())
+    await window.waitForTimeout(300)
+
+    // Navigate to Settings tab
+    const settingsTab = window.locator('.segmented-tab', { hasText: 'Settings' })
+    await settingsTab.click()
+
+    // Click Amber theme swatch
+    const amberBtn = window.locator('.theme-swatch-btn[title="Amber"]')
+    await expect(amberBtn).toBeVisible()
+    await amberBtn.click()
+    await window.waitForTimeout(100)
+
+    // Verify swatch is active
+    await expect(amberBtn).toHaveClass(/active/)
+
+    // Check mock preview has amber background
+    const mockNotch = window.locator('.mock-notch-preview')
+    await expect(mockNotch).toHaveCSS('background-color', 'rgb(18, 10, 0)')
+
+    // Collapse and check real notch has amber background
+    await window.evaluate(() => window.beacon?.test?.collapse())
+    await window.waitForTimeout(300)
+
+    const notch = window.locator('.notch')
+    await expect(notch).toHaveCSS('background-color', 'rgb(18, 10, 0)')
+  })
+
+  test('13. Notch content configuration and cycle mode', async () => {
+    // Expand
+    await window.evaluate(() => window.beacon?.test?.expand())
+    await window.waitForTimeout(300)
+
+    const settingsTab = window.locator('.segmented-tab', { hasText: 'Settings' })
+    await settingsTab.click()
+
+    // Switch to Cycle mode
+    const cycleTab = window.locator('.segmented--small .segmented-tab', { hasText: 'Cycle' })
+    await expect(cycleTab).toBeVisible()
+    await cycleTab.click()
+
+    // Enable Companion
+    const companionToggle = window.locator('.source-item', { hasText: 'Companion' }).locator('.switch-btn')
+    await companionToggle.click()
+    await expect(companionToggle).toHaveClass(/switch--on/)
+
+    // Collapse
+    await window.evaluate(() => window.beacon?.test?.collapse())
+    await window.waitForTimeout(300)
+
+    // Check notch is still cleanly 190x30 with 0 delta
+    const bounds = await window.evaluate(() => window.beacon?.test?.getBounds())
+    expect(bounds?.width).toBe(190)
+    expect(bounds?.height).toBe(30)
+  })
+
+  test('14. Full open/close stability with Companion eyes and themes maintains 1px invariance', async () => {
+    for (let i = 0; i < 5; i++) {
+      const collapsed = await window.evaluate(() => {
+        const notch = document.querySelector('.notch')
+        const rect = notch ? notch.getBoundingClientRect() : null
+        return window.screenX + (rect ? rect.left : 0)
+      })
+
+      await window.evaluate(() => window.beacon?.test?.expand('click'))
+      await window.waitForTimeout(200)
+
+      await window.evaluate(() => window.beacon?.test?.collapse())
+      await window.waitForTimeout(200)
+
+      const after = await window.evaluate(() => {
+        const notch = document.querySelector('.notch')
+        const rect = notch ? notch.getBoundingClientRect() : null
+        return window.screenX + (rect ? rect.left : 0)
+      })
+
+      expect(Math.abs(after - collapsed)).toBeLessThanOrEqual(1)
+    }
+  })
 })

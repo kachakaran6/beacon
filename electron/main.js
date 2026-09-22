@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, Notification, screen, shell, Tray } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, Notification, screen, shell, systemPreferences, Tray } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import fs from 'node:fs'
@@ -924,6 +924,17 @@ if (typeof ipcMain !== 'undefined' && ipcMain && typeof ipcMain.handle === 'func
       bounds: d.bounds,
       isPrimary: d.id === primaryId,
     }))
+  })
+
+  ipcMain.handle('system:get-accent-color', () => {
+    try {
+      if (systemPreferences && typeof systemPreferences.getAccentColor === 'function') {
+        return systemPreferences.getAccentColor()
+      }
+    } catch {
+      // Safe fallback
+    }
+    return null
   })
 
   ipcMain.handle('notch:set-position', (_event, settings) => {

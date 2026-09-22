@@ -114,12 +114,54 @@ describe('Store Actions', () => {
     expect(useStore.getState().events).toHaveLength(0)
   })
 
+  it('handles color themes and persists choice', () => {
+    expect(useStore.getState().theme).toBe('classic')
+    useStore.getState().setTheme('amber')
+    expect(useStore.getState().theme).toBe('amber')
+
+    const payload = getPersistPayload(useStore.getState())
+    expect(payload.theme).toBe('amber')
+  })
+
+  it('manages notch content configuration, toggles, and modes', () => {
+    expect(useStore.getState().notchContentMode).toBe('smart')
+    expect(useStore.getState().notchSources).toEqual(['clock', 'timer'])
+
+    useStore.getState().setNotchContentMode('cycle')
+    expect(useStore.getState().notchContentMode).toBe('cycle')
+
+    useStore.getState().toggleNotchSource('task')
+    expect(useStore.getState().notchSources).toContain('task')
+
+    useStore.getState().toggleNotchSource('timer')
+    expect(useStore.getState().notchSources).not.toContain('timer')
+
+    useStore.getState().setNotchCycleInterval(7)
+    expect(useStore.getState().notchCycleInterval).toBe(7)
+
+    // Clamps interval to [3, 10]
+    useStore.getState().setNotchCycleInterval(1)
+    expect(useStore.getState().notchCycleInterval).toBe(3)
+    useStore.getState().setNotchCycleInterval(25)
+    expect(useStore.getState().notchCycleInterval).toBe(10)
+  })
+
+  it('toggles reduce animations setting', () => {
+    expect(useStore.getState().reduceAnimations).toBe(false)
+    useStore.getState().setReduceAnimations(true)
+    expect(useStore.getState().reduceAnimations).toBe(true)
+  })
+
   it('hydrates saved state cleanly without data loss', () => {
     const saved = {
       ...INITIAL_STATE,
       tasks: [{ id: '1', title: 'Saved task', priority: 'medium' as const, completed: false, createdAt: 100 }],
       note: 'Persisted note',
       sessions: 4,
+      theme: 'ice' as const,
+      notchContentMode: 'cycle' as const,
+      notchSources: ['clock' as const, 'companion' as const],
+      reduceAnimations: true,
     }
     useStore.getState().hydrate(saved)
     const state = useStore.getState()
@@ -127,9 +169,17 @@ describe('Store Actions', () => {
     expect(state.tasks).toHaveLength(1)
     expect(state.note).toBe('Persisted note')
     expect(state.sessions).toBe(4)
+    expect(state.theme).toBe('ice')
+    expect(state.notchContentMode).toBe('cycle')
+    expect(state.notchSources).toEqual(['clock', 'companion'])
+    expect(state.reduceAnimations).toBe(true)
 
     const payload = getPersistPayload(state)
     expect(payload.tasks).toHaveLength(1)
     expect(payload.note).toBe('Persisted note')
+    expect(payload.theme).toBe('ice')
+    expect(payload.notchContentMode).toBe('cycle')
+    expect(payload.notchSources).toEqual(['clock', 'companion'])
+    expect(payload.reduceAnimations).toBe(true)
   })
 })

@@ -19,6 +19,15 @@ import SlidersHorizontalIcon from 'lucide-react/dist/esm/icons/sliders-horizonta
 import Trash2Icon from 'lucide-react/dist/esm/icons/trash-2.mjs'
 import XIcon from 'lucide-react/dist/esm/icons/x.mjs'
 import './App.css'
+import { DotMatrix } from './components/DotMatrix'
+import { CompanionEyes } from './components/CompanionEyes'
+import { getTheme, THEME_LIST } from './themes'
+import {
+  DEFAULT_NOTCH_SOURCE_ORDER,
+  evaluateNotchContent,
+  NOTCH_SOURCES,
+} from './notch-content'
+import type { NotchContentMode } from './notch-content'
 import type { CalEvent, DisplayInfo, NotchAlign, Priority, Task } from './store'
 import {
   DEFAULT_NOTCH,
@@ -60,116 +69,6 @@ function formatDate(ts: number | null): string {
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10)
-}
-
-function truncateTitle(title: string, maxChars = 11): string {
-  if (title.length <= maxChars) return title
-  return title.slice(0, maxChars - 1).trim() + '…'
-}
-
-// ─── Dot-matrix font glyph definitions ────────────────────────────────────────
-
-const letterMatrix: Record<string, string[]> = {
-  A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
-  B: ['11110', '10001', '10001', '11110', '10001', '10001', '11110'],
-  C: ['01111', '10000', '10000', '10000', '10000', '10000', '01111'],
-  D: ['11110', '10001', '10001', '10001', '10001', '10001', '11110'],
-  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
-  F: ['11111', '10000', '10000', '11110', '10000', '10000', '10000'],
-  G: ['01111', '10000', '10000', '10111', '10001', '10001', '01111'],
-  H: ['10001', '10001', '10001', '11111', '10001', '10001', '10001'],
-  I: ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
-  J: ['00111', '00010', '00010', '00010', '10010', '10010', '01100'],
-  K: ['10001', '10010', '10100', '11000', '10100', '10010', '10001'],
-  L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
-  M: ['10001', '11011', '10101', '10101', '10001', '10001', '10001'],
-  N: ['10001', '11001', '10101', '10011', '10001', '10001', '10001'],
-  O: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
-  P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
-  Q: ['01110', '10001', '10001', '10001', '10101', '10010', '01101'],
-  R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
-  S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
-  T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
-  U: ['10001', '10001', '10001', '10001', '10001', '10001', '01110'],
-  V: ['10001', '10001', '10001', '10001', '10001', '01010', '00100'],
-  W: ['10001', '10001', '10001', '10101', '10101', '11011', '10001'],
-  X: ['10001', '10001', '01010', '00100', '01010', '10001', '10001'],
-  Y: ['10001', '10001', '01010', '00100', '00100', '00100', '00100'],
-  Z: ['11111', '00001', '00010', '00100', '01000', '10000', '11111'],
-}
-
-const numMatrix: Record<string, string[]> = {
-  '0': ['01110', '10001', '10011', '10101', '11001', '10001', '01110'],
-  '1': ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
-  '2': ['01110', '10001', '00001', '00010', '00100', '01000', '11111'],
-  '3': ['11110', '00001', '00001', '01110', '00001', '00001', '11110'],
-  '4': ['00010', '00110', '01010', '10010', '11111', '00010', '00010'],
-  '5': ['11111', '10000', '10000', '11110', '00001', '00001', '11110'],
-  '6': ['00110', '01000', '10000', '11110', '10001', '10001', '01110'],
-  '7': ['11111', '00001', '00010', '00100', '01000', '01000', '01000'],
-  '8': ['01110', '10001', '10001', '01110', '10001', '10001', '01110'],
-  '9': ['01110', '10001', '10001', '01111', '00001', '00010', '01100'],
-  ':': ['00000', '00100', '00100', '00000', '00100', '00100', '00000'],
-  '.': ['00000', '00000', '00000', '00000', '00000', '01100', '01100'],
-  '…': ['00000', '00000', '00000', '00000', '00000', '10101', '10101'],
-  '-': ['00000', '00000', '00000', '11111', '00000', '00000', '00000'],
-  '/': ['00001', '00010', '00100', '01000', '10000', '00000', '00000'],
-  ' ': ['00000', '00000', '00000', '00000', '00000', '00000', '00000'],
-}
-
-const charMatrix = (c: string) =>
-  numMatrix[c] ?? letterMatrix[c.toUpperCase()] ?? numMatrix[' ']
-
-/** Responsive SVG DotMatrix. viewBox is dynamically sized, preserves aspect ratio. */
-function DotMatrix({
-  value,
-  className = '',
-  litColor,
-  unlitColor,
-}: {
-  value: string
-  className?: string
-  litColor?: string
-  unlitColor?: string
-}) {
-  const chars = value.split('')
-  const cols = chars.length
-  const charWidth = 15
-  const charGap = 3
-  const totalWidth = Math.max(18, cols * (charWidth + charGap) - charGap)
-  const totalHeight = 21
-
-  return (
-    <svg
-      className={`dot-matrix ${className}`}
-      viewBox={`0 0 ${totalWidth} ${totalHeight}`}
-      preserveAspectRatio="xMidYMid meet"
-      aria-label={value}
-      role="img"
-    >
-      {chars.map((char, ci) => {
-        const rows = charMatrix(char)
-        const ox = ci * (charWidth + charGap)
-        return rows.flatMap((row, ri) =>
-          row.split('').map((lit, di) => {
-            const isLit = lit === '1'
-            return (
-              <circle
-                key={`${ci}-${ri}-${di}`}
-                cx={ox + di * 3 + 1.5}
-                cy={ri * 3 + 1.5}
-                r={1.1}
-                className={isLit ? 'dot-lit' : 'dot-unlit'}
-                style={{
-                  fill: isLit ? litColor : unlitColor,
-                }}
-              />
-            )
-          })
-        )
-      })}
-    </svg>
-  )
 }
 
 // ─── Toast Component ──────────────────────────────────────────────────────────
@@ -228,29 +127,81 @@ export default function App() {
   const isRunning = useStore((s) => s.isRunning)
   const secondsLeft = useStore((s) => s.secondsLeft)
   const duration = useStore((s) => s.duration)
+  const sessions = useStore((s) => s.sessions)
   const activeTaskId = useStore((s) => s.activeTaskId)
   const tasks = useStore((s) => s.tasks)
   const telemetryConsent = useStore((s) => s.telemetryConsent)
+  const theme = useStore((s) => s.theme) ?? 'classic'
+  const notchContentMode = useStore((s) => s.notchContentMode) ?? 'smart'
+  const notchSources = useStore((s) => s.notchSources) ?? ['clock', 'timer']
+  const notchSourceOrder = useStore((s) => s.notchSourceOrder) ?? DEFAULT_NOTCH_SOURCE_ORDER
+  const notchCycleInterval = useStore((s) => s.notchCycleInterval) ?? 5
+  const reduceAnimations = useStore((s) => s.reduceAnimations) ?? false
+
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+      ? true
+      : false
+  )
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches)
+    mq.addEventListener?.('change', handler)
+    return () => mq.removeEventListener?.('change', handler)
+  }, [])
+
+  const effectiveReduceAnimations = reduceAnimations || prefersReducedMotion
+
+  const [systemAccent, setSystemAccent] = useState<string | null>(null)
+  const [cycleIndex, setCycleIndex] = useState(0)
+  const [sessionJustFinished, setSessionJustFinished] = useState(false)
+  const prevSessions = useRef(sessions)
 
   const activeTask =
     tasks.find((t) => t.id === activeTaskId) ??
     tasks.find((t) => !t.completed) ??
     null
 
-  // ── Initialise persistence & hydration ─────────────────────────────────────
+  // ── Initialise persistence, hydration & system accent ───────────────────────
   useEffect(() => {
     let unsub: (() => void) | undefined
     hydrateFromDisk().then(() => {
       unsub = startPersistence()
     })
+    api()?.getAccentColor?.().then((accent) => {
+      if (accent) setSystemAccent(accent)
+    })
     return () => unsub?.()
   }, [])
 
+  // ── Track session finish for Companion celebratory squint ───────────────────
+  useEffect(() => {
+    if (sessions > prevSessions.current) {
+      setSessionJustFinished(true)
+      const t = setTimeout(() => setSessionJustFinished(false), 1800)
+      prevSessions.current = sessions
+      return () => clearTimeout(t)
+    }
+    prevSessions.current = sessions
+  }, [sessions])
+
   // ── Clock tick ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    const t = setInterval(() => setClockStr(formatClock()), 10_000)
+    const t = setInterval(() => setClockStr(formatClock()), 5_000)
     return () => clearInterval(t)
   }, [])
+
+  // ── Cycle mode rotation scheduler ──────────────────────────────────────────
+  useEffect(() => {
+    if (notchContentMode !== 'cycle' || open || appMode) return
+    const intervalMs = Math.max(3, Math.min(10, notchCycleInterval)) * 1000
+    const t = setInterval(() => {
+      setCycleIndex((i) => i + 1)
+    }, intervalMs)
+    return () => clearInterval(t)
+  }, [notchContentMode, notchCycleInterval, open, appMode])
 
   // ── Timer tick ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -409,12 +360,21 @@ export default function App() {
 
   const showToast = useCallback((text: string) => setToastMsg({ text }), [])
 
-  // ── Notch content ──────────────────────────────────────────────────────────
-  const notchContent = () => {
-    if (isRunning) return formatTime(secondsLeft)
-    if (activeTask) return truncateTitle(activeTask.title, 11)
-    return clockStr
-  }
+  // ── Current Theme & Notch content ──────────────────────────────────────────
+  const currentTheme = getTheme(theme, systemAccent)
+
+  const notchEval = evaluateNotchContent({
+    clockStr,
+    isRunning,
+    secondsLeft,
+    duration,
+    sessions,
+    activeTaskTitle: activeTask?.title,
+    enabledSources: notchSources,
+    sourceOrder: notchSourceOrder,
+    mode: notchContentMode,
+    cycleIndex,
+  })
 
   const progress = Math.max(0, Math.min(1, 1 - secondsLeft / duration))
 
@@ -422,13 +382,15 @@ export default function App() {
     <main
       className={`shell ${open ? 'shell--open' : ''} ${appMode ? 'shell--app' : ''}`}
     >
-      {/* Notch Pill (Monochrome #000, 190x30, bottom radius 15px) */}
+      {/* Notch Pill with Curated Theme (190x30, bottom radius 15px) */}
       {!open && !appMode && (
         <button
           className="notch"
           style={{
             left: `${pillLeft}px`,
             transform: 'none',
+            background: currentTheme.background,
+            boxShadow: `0 0 10px ${currentTheme.glow}`,
           }}
           aria-label="Open Beacon"
           onClick={() => openPanel('click')}
@@ -438,22 +400,66 @@ export default function App() {
         >
           {isRunning && (
             <svg className="notch-ring" viewBox="0 0 20 20" aria-hidden="true">
-              <circle cx="10" cy="10" r="7" className="notch-ring-track" />
+              <circle
+                cx="10"
+                cy="10"
+                r="7"
+                className="notch-ring-track"
+                style={{ stroke: currentTheme.dotUnlit }}
+              />
               <circle
                 cx="10"
                 cy="10"
                 r="7"
                 className="notch-ring-fill"
+                style={{ stroke: currentTheme.accent }}
                 strokeDasharray={`${progress * 43.98} 43.98`}
               />
             </svg>
           )}
-          <DotMatrix
-            value={notchContent()}
-            className="notch-matrix"
-            litColor="rgba(255, 255, 255, 0.85)"
-            unlitColor="rgba(255, 255, 255, 0.08)"
-          />
+
+          <div className="notch-content-wrap">
+            {notchEval.isCompanion ? (
+              <CompanionEyes
+                litColor={currentTheme.dotLit}
+                unlitColor={currentTheme.dotUnlit}
+                glowColor={currentTheme.glow}
+                isFocusSession={isRunning}
+                sessionJustFinished={sessionJustFinished}
+                reduceMotion={effectiveReduceAnimations}
+                isActive={!open && !appMode}
+              />
+            ) : (
+              <DotMatrix
+                value={notchEval.text}
+                grid="5x7"
+                className="notch-matrix"
+                litColor={currentTheme.dotLit}
+                unlitColor={currentTheme.dotUnlit}
+                glowColor={currentTheme.glow}
+                reduceMotion={effectiveReduceAnimations}
+              />
+            )}
+
+            {notchContentMode === 'cycle' &&
+              notchEval.totalCycleItems !== undefined &&
+              notchEval.totalCycleItems > 1 && (
+                <div className="notch-cycle-indicator">
+                  {Array.from({ length: notchEval.totalCycleItems }).map((_, idx) => (
+                    <span
+                      key={idx}
+                      className={`notch-cycle-dot ${idx === notchEval.currentCycleIndex ? 'active' : ''}`}
+                      style={{
+                        backgroundColor:
+                          idx === notchEval.currentCycleIndex
+                            ? currentTheme.dotLit
+                            : currentTheme.dotUnlit,
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+          </div>
         </button>
       )}
 
@@ -466,10 +472,24 @@ export default function App() {
             style={{
               transformOrigin: `${Math.round(originXRatio * 100)}% 0%`,
             }}
-            initial={appMode ? false : { opacity: 0, scaleY: 0.94, scaleX: 0.97 }}
+            initial={
+              appMode
+                ? false
+                : effectiveReduceAnimations
+                ? { opacity: 0 }
+                : { opacity: 0, scaleY: 0.94, scaleX: 0.97 }
+            }
             animate={{ opacity: 1, scaleY: 1, scaleX: 1 }}
-            exit={{ opacity: 0, scaleY: 0.94, scaleX: 0.97 }}
-            transition={{ duration: 0.18, ease: [0.33, 1, 0.68, 1] }}
+            exit={
+              effectiveReduceAnimations
+                ? { opacity: 0 }
+                : { opacity: 0, scaleY: 0.94, scaleX: 0.97 }
+            }
+            transition={
+              effectiveReduceAnimations
+                ? { duration: 0.12 }
+                : { duration: 0.18, ease: [0.33, 1, 0.68, 1] }
+            }
             onContextMenu={(e) => {
               if (!appMode) {
                 e.preventDefault()
@@ -930,9 +950,11 @@ function TimerCard() {
       <div className="timer-svg-container" aria-label={`Timer ${formatTime(secondsLeft)}`}>
         <DotMatrix
           value={formatTime(secondsLeft)}
+          grid="7x11"
           className="timer-matrix"
           litColor="#111111"
           unlitColor="rgba(0, 0, 0, 0.08)"
+          glowColor="rgba(0, 0, 0, 0.15)"
         />
       </div>
 
@@ -1287,17 +1309,26 @@ function SettingsTab({ showToast }: { showToast: (m: string) => void }) {
   const openOnHover = useStore((s) => s.openOnHover)
   const autoHideNotch = useStore((s) => s.autoHideNotch)
   const notch = useStore((s) => s.notch) ?? DEFAULT_NOTCH
+  const theme = useStore((s) => s.theme) ?? 'classic'
+  const notchContentMode = useStore((s) => s.notchContentMode) ?? 'smart'
+  const notchSources = useStore((s) => s.notchSources) ?? ['clock', 'timer']
+  const notchCycleInterval = useStore((s) => s.notchCycleInterval) ?? 5
+  const reduceAnimations = useStore((s) => s.reduceAnimations) ?? false
   const telemetryConsent = useStore((s) => s.telemetryConsent)
   const telemetryInstallId = useStore((s) => s.telemetryInstallId)
   const autoUpdate = useStore((s) => s.autoUpdate)
   const updateStatus = useStore((s) => s.updateStatus)
 
   const [displays, setDisplays] = useState<DisplayInfo[]>([])
+  const [systemAccent, setSystemAccent] = useState<string | null>(null)
   const [showPrivacyPreview, setShowPrivacyPreview] = useState(false)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
 
   useEffect(() => {
     api()?.getDisplays().then((d) => setDisplays(d || []))
+    api()?.getAccentColor?.().then((acc) => {
+      if (acc) setSystemAccent(acc)
+    })
   }, [])
 
   async function handleLaunchAtStartup() {
@@ -1329,6 +1360,8 @@ function SettingsTab({ showToast }: { showToast: (m: string) => void }) {
       setCheckingUpdate(false)
     }
   }
+
+  const currentTheme = getTheme(theme, systemAccent)
 
   const liveTelemetryPayload = {
     v: 1,
@@ -1410,6 +1443,87 @@ function SettingsTab({ showToast }: { showToast: (m: string) => void }) {
             )}
           </div>
 
+          {/* Notch Color with Swatches and Live Mock Preview */}
+          <div className="setting-card">
+            <div className="theme-section-wrap">
+              <div className="setting-row-top">
+                <div>
+                  <span className="setting-title">Notch color</span>
+                  <span className="setting-desc" style={{ display: 'block', marginTop: 2 }}>
+                    Selected: {currentTheme.name}
+                  </span>
+                </div>
+              </div>
+
+              {/* Live Preview in a small mock notch */}
+              <div className="mock-notch-wrap">
+                <div
+                  className="mock-notch-preview"
+                  style={{
+                    background: currentTheme.background,
+                    boxShadow: `0 0 10px ${currentTheme.glow}`,
+                  }}
+                >
+                  <DotMatrix
+                    value="12:00"
+                    grid="5x7"
+                    className="mock-notch-matrix"
+                    litColor={currentTheme.dotLit}
+                    unlitColor={currentTheme.dotUnlit}
+                    glowColor={currentTheme.glow}
+                    reduceMotion={reduceAnimations}
+                  />
+                </div>
+              </div>
+
+              {/* Swatch row showing dotLit + background */}
+              <div className="theme-swatch-row" role="radiogroup" aria-label="Notch Color Themes">
+                {THEME_LIST.map((thId) => {
+                  const th = getTheme(thId, systemAccent)
+                  const isActive = theme === thId
+                  return (
+                    <button
+                      key={thId}
+                      className={`theme-swatch-btn ${isActive ? 'active' : ''}`}
+                      style={{
+                        background: th.background,
+                        borderColor: isActive ? th.accent : 'transparent',
+                      }}
+                      onClick={() => useStore.getState().setTheme(thId)}
+                      title={th.name}
+                      aria-label={`Theme: ${th.name}`}
+                      role="radio"
+                      aria-checked={isActive}
+                    >
+                      <span
+                        className="swatch-inner-dot"
+                        style={{
+                          background: th.dotLit,
+                          boxShadow: `0 0 4px ${th.glow}`,
+                        }}
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-text">
+              <span className="setting-title">Reduce animations</span>
+              <span className="setting-desc">Disable idle glances and glow pulsing</span>
+            </div>
+            <button
+              className={`switch-btn ${reduceAnimations ? 'switch--on' : ''}`}
+              role="switch"
+              aria-checked={reduceAnimations}
+              onClick={() => useStore.getState().setReduceAnimations(!reduceAnimations)}
+            >
+              <span className="switch-knob" />
+            </button>
+          </div>
+
           <div className="setting-row">
             <div className="setting-text">
               <span className="setting-title">Open on hover</span>
@@ -1438,6 +1552,83 @@ function SettingsTab({ showToast }: { showToast: (m: string) => void }) {
             >
               <span className="switch-knob" />
             </button>
+          </div>
+        </section>
+
+        {/* Notch Content */}
+        <section className="settings-section">
+          <div className="section-title">Notch Content</div>
+
+          <div className="setting-card">
+            <div className="setting-row-top">
+              <div>
+                <span className="setting-title">Rotation Mode</span>
+                <span className="setting-desc" style={{ display: 'block', marginTop: 2 }}>
+                  {notchContentMode === 'smart'
+                    ? 'Smart: Shows active timer if running, otherwise next task or clock'
+                    : `Cycle: Rotates through enabled sources every ${notchCycleInterval}s`}
+                </span>
+              </div>
+              <div className="segmented segmented--small" role="tablist">
+                {(['smart', 'cycle'] as NotchContentMode[]).map((m) => (
+                  <button
+                    key={m}
+                    role="tab"
+                    aria-selected={notchContentMode === m}
+                    className={`segmented-tab ${notchContentMode === m ? 'active' : ''}`}
+                    onClick={() => useStore.getState().setNotchContentMode(m)}
+                  >
+                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {notchContentMode === 'cycle' && (
+              <div className="setting-slider-row" style={{ marginTop: 12 }}>
+                <div className="slider-label-wrap">
+                  <span className="setting-sub">Cycle Interval ({notchCycleInterval}s)</span>
+                </div>
+                <input
+                  type="range"
+                  min="3"
+                  max="10"
+                  step="1"
+                  className="setting-range"
+                  value={notchCycleInterval}
+                  onChange={(e) =>
+                    useStore.getState().setNotchCycleInterval(parseInt(e.target.value, 10))
+                  }
+                />
+              </div>
+            )}
+
+            <div className="source-checklist">
+              {NOTCH_SOURCES.map((src) => {
+                const isNone = src.id === 'none'
+                const isChecked = isNone
+                  ? notchSources.includes('none')
+                  : notchSources.includes(src.id) && !notchSources.includes('none')
+
+                return (
+                  <div key={src.id} className="source-item">
+                    <div className="source-info">
+                      <span className="source-title">{src.label}</span>
+                      <span className="source-desc">{src.description}</span>
+                    </div>
+                    <button
+                      className={`switch-btn ${isChecked ? 'switch--on' : ''}`}
+                      role="switch"
+                      aria-checked={isChecked}
+                      onClick={() => useStore.getState().toggleNotchSource(src.id)}
+                      aria-label={`Toggle ${src.label}`}
+                    >
+                      <span className="switch-knob" />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </section>
 
