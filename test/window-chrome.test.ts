@@ -8,15 +8,15 @@ describe('Window Chrome and Taskbar Suppression (Bug 1)', () => {
       setSkipTaskbar: vi.fn(),
       setAlwaysOnTop: vi.fn(),
       setMenuBarVisibility: vi.fn(),
-      setContentProtection: vi.fn(),
+      setVisibleOnAllWorkspaces: vi.fn(),
     }
 
     applyWindowChrome(mockWin as any)
 
     expect(mockWin.setSkipTaskbar).toHaveBeenCalledWith(true)
-    expect(mockWin.setAlwaysOnTop).toHaveBeenCalledWith(true, 'floating')
+    expect(mockWin.setAlwaysOnTop).toHaveBeenCalledWith(true, 'screen-saver')
     expect(mockWin.setMenuBarVisibility).toHaveBeenCalledWith(false)
-    expect(mockWin.setContentProtection).toHaveBeenCalledWith(false)
+    expect(mockWin.setVisibleOnAllWorkspaces).toHaveBeenCalledWith(true, { visibleOnFullScreen: true })
   })
 
   it('safely ignores destroyed window instances without throwing', () => {

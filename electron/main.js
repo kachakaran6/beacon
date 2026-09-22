@@ -138,9 +138,9 @@ export function applyWindowChrome(win) {
   if (!win || win.isDestroyed?.()) return
   try {
     win.setSkipTaskbar?.(true)
-    win.setAlwaysOnTop?.(true, 'floating')
+    win.setAlwaysOnTop?.(true, 'screen-saver')
     win.setMenuBarVisibility?.(false)
-    win.setContentProtection?.(false)
+    win.setVisibleOnAllWorkspaces?.(true, { visibleOnFullScreen: true })
   } catch {
     // Ignore if window is being destroyed
   }
@@ -209,12 +209,7 @@ export async function transitionToOpen(by = 'click') {
 
   log(`[main] transitionToOpen by=${by} pillLeft=${pillLeft} originX=${pb.originX}`)
 
-  // 1. Atomic setBounds without opacity dropping (transparent window avoids visual flash)
-  mainWindow.setBounds({ x: pb.x, y: pb.y, width: pb.width, height: pb.height })
-  mainWindow.setFocusable(true)
-  applyWindowChrome(mainWindow)
-
-  // 2. Send layout:apply and await renderer 2-rAF ack
+  // 1. Send layout:apply FIRST and await renderer 2-rAF ack
   const ackPromise = new Promise((resolve) => {
     layoutAckResolver = resolve
     setTimeout(resolve, 100) // safety fallback
@@ -229,6 +224,11 @@ export async function transitionToOpen(by = 'click') {
 
   await ackPromise
   layoutAckResolver = null
+
+  // 2. Atomic setBounds after renderer has painted correct pillLeft
+  mainWindow.setBounds({ x: pb.x, y: pb.y, width: pb.width, height: pb.height })
+  mainWindow.setFocusable(true)
+  applyWindowChrome(mainWindow)
 
   // 3. Reveal window at new bounds and trigger open animation
   if (by === 'click' || by === 'shortcut') {
@@ -281,13 +281,7 @@ export async function transitionToClose(reason = 'user') {
   await closeDonePromise
   closeDoneResolver = null
 
-  // 2. Swap back to collapsed notch bounds without opacity flash
-  const nb = getNotchBounds(false)
-  mainWindow.setBounds({ x: nb.x, y: nb.y, width: nb.width, height: nb.height })
-  mainWindow.setFocusable(false)
-  applyWindowChrome(mainWindow)
-
-  // 3. Send collapsed layout and await ack
+  // 2. Send collapsed layout FIRST and await renderer ack
   const ackPromise = new Promise((resolve) => {
     layoutAckResolver = resolve
     setTimeout(resolve, 100)
@@ -302,6 +296,12 @@ export async function transitionToClose(reason = 'user') {
 
   await ackPromise
   layoutAckResolver = null
+
+  // 3. Swap back to collapsed notch bounds after renderer has painted pillLeft = 0
+  const nb = getNotchBounds(false)
+  mainWindow.setBounds({ x: nb.x, y: nb.y, width: nb.width, height: nb.height })
+  mainWindow.setFocusable(false)
+  applyWindowChrome(mainWindow)
 
   // 4. Reveal collapsed notch
   mainWindow.showInactive()
@@ -483,6 +483,7 @@ function createWindow() {
     },
   })
 
+  mainWindow.setContentProtection?.(false)
   applyWindowChrome(mainWindow)
 
   mainWindow.once('ready-to-show', () => {

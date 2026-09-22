@@ -476,18 +476,18 @@ export default function App() {
                 ? false
                 : effectiveReduceAnimations
                 ? { opacity: 0 }
-                : { opacity: 0.8, scaleY: 0.10, scaleX: 0.22 }
+                : { opacity: 0, y: -6, scale: 0.98 }
             }
-            animate={{ opacity: 1, scaleY: 1, scaleX: 1 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={
               effectiveReduceAnimations
                 ? { opacity: 0 }
-                : { opacity: 0, scaleY: 0.10, scaleX: 0.22 }
+                : { opacity: 0, y: -4, scale: 0.98 }
             }
             transition={
               effectiveReduceAnimations
                 ? { duration: 0.12 }
-                : { duration: 0.22, ease: [0.16, 1, 0.3, 1] }
+                : { duration: 0.18, ease: [0.16, 1, 0.3, 1] }
             }
             onContextMenu={(e) => {
               if (!appMode) {
