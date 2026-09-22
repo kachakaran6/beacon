@@ -115,7 +115,7 @@ describe('Store Actions', () => {
   })
 
   it('handles color themes and persists choice', () => {
-    expect(useStore.getState().theme).toBe('classic')
+    expect(useStore.getState().theme).toBe('mono')
     useStore.getState().setTheme('amber')
     expect(useStore.getState().theme).toBe('amber')
 

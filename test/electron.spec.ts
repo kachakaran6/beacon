@@ -314,16 +314,16 @@ test.describe.serial('Beacon Electron E2E Tests', () => {
     // Verify swatch is active
     await expect(amberBtn).toHaveClass(/active/)
 
-    // Check mock preview has amber background
+    // Check mock preview has amber background (#0F0C08)
     const mockNotch = window.locator('.mock-notch-preview')
-    await expect(mockNotch).toHaveCSS('background-color', 'rgb(18, 10, 0)')
+    await expect(mockNotch).toHaveCSS('background-color', 'rgb(15, 12, 8)')
 
     // Collapse and check real notch has amber background
     await window.evaluate(() => window.beacon?.test?.collapse())
     await window.waitForTimeout(300)
 
     const notch = window.locator('.notch')
-    await expect(notch).toHaveCSS('background-color', 'rgb(18, 10, 0)')
+    await expect(notch).toHaveCSS('background-color', 'rgb(15, 12, 8)')
   })
 
   test('13. Notch content configuration and cycle mode', async () => {

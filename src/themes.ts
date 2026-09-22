@@ -1,4 +1,17 @@
-export type ThemeId = 'classic' | 'amber' | 'ice' | 'forest' | 'sunset' | 'violet' | 'system'
+export type ThemeId =
+  | 'mono'
+  | 'warm-white'
+  | 'amber'
+  | 'glacier'
+  | 'sage'
+  | 'rosewood'
+  | 'system'
+  // Legacy theme IDs for backward compatibility
+  | 'classic'
+  | 'ice'
+  | 'forest'
+  | 'sunset'
+  | 'violet'
 
 export interface ColorTheme {
   id: ThemeId
@@ -10,78 +23,170 @@ export interface ColorTheme {
   glow: string
 }
 
-export const COLOR_THEMES: Record<Exclude<ThemeId, 'system'>, ColorTheme> = {
-  classic: {
-    id: 'classic',
-    name: 'Classic Mono',
-    background: '#000000',
-    dotLit: '#FFFFFF',
-    dotUnlit: 'rgba(255, 255, 255, 0.08)',
-    accent: '#FFFFFF',
-    glow: 'rgba(255, 255, 255, 0.35)',
+export const PRIMARY_THEME_IDS = [
+  'mono',
+  'warm-white',
+  'amber',
+  'glacier',
+  'sage',
+  'rosewood',
+] as const
+
+export const THEME_LIST: ThemeId[] = [
+  'mono',
+  'warm-white',
+  'amber',
+  'glacier',
+  'sage',
+  'rosewood',
+  'system',
+]
+
+export const COLOR_THEMES: Record<
+  (typeof PRIMARY_THEME_IDS)[number],
+  ColorTheme
+> = {
+  mono: {
+    id: 'mono',
+    name: 'Mono',
+    background: '#0A0A0C',
+    dotLit: '#E8E8E8',
+    dotUnlit: 'rgba(232, 232, 232, 0.06)',
+    accent: '#E8E8E8',
+    glow: 'rgba(232, 232, 232, 0.08)',
+  },
+  'warm-white': {
+    id: 'warm-white',
+    name: 'Warm White',
+    background: '#0D0C0A',
+    dotLit: '#EFE6D8',
+    dotUnlit: 'rgba(239, 230, 216, 0.06)',
+    accent: '#EFE6D8',
+    glow: 'rgba(239, 230, 216, 0.08)',
   },
   amber: {
     id: 'amber',
     name: 'Amber',
-    background: '#120A00',
-    dotLit: '#FF9E1B',
-    dotUnlit: 'rgba(255, 158, 27, 0.10)',
-    accent: '#FF9E1B',
-    glow: 'rgba(255, 158, 27, 0.40)',
+    background: '#0F0C08',
+    dotLit: '#C89248',
+    dotUnlit: 'rgba(200, 146, 72, 0.07)',
+    accent: '#C89248',
+    glow: 'rgba(200, 146, 72, 0.08)',
   },
-  ice: {
-    id: 'ice',
-    name: 'Ice',
-    background: '#041018',
-    dotLit: '#38BDF8',
-    dotUnlit: 'rgba(56, 189, 248, 0.10)',
-    accent: '#38BDF8',
-    glow: 'rgba(56, 189, 248, 0.40)',
+  glacier: {
+    id: 'glacier',
+    name: 'Glacier',
+    background: '#090C0E',
+    dotLit: '#8DA6B8',
+    dotUnlit: 'rgba(141, 166, 184, 0.07)',
+    accent: '#8DA6B8',
+    glow: 'rgba(141, 166, 184, 0.08)',
   },
-  forest: {
-    id: 'forest',
-    name: 'Forest',
-    background: '#06150B',
-    dotLit: '#4ADE80',
-    dotUnlit: 'rgba(74, 222, 128, 0.10)',
-    accent: '#4ADE80',
-    glow: 'rgba(74, 222, 128, 0.40)',
+  sage: {
+    id: 'sage',
+    name: 'Sage',
+    background: '#090D0A',
+    dotLit: '#8FA892',
+    dotUnlit: 'rgba(143, 168, 146, 0.07)',
+    accent: '#8FA892',
+    glow: 'rgba(143, 168, 146, 0.08)',
   },
-  sunset: {
-    id: 'sunset',
-    name: 'Sunset',
-    background: '#170A08',
-    dotLit: '#FF7A59',
-    dotUnlit: 'rgba(255, 122, 89, 0.10)',
-    accent: '#FF7A59',
-    glow: 'rgba(255, 122, 89, 0.40)',
-  },
-  violet: {
-    id: 'violet',
-    name: 'Violet',
-    background: '#12091D',
-    dotLit: '#C084FC',
-    dotUnlit: 'rgba(192, 132, 252, 0.10)',
-    accent: '#C084FC',
-    glow: 'rgba(192, 132, 252, 0.40)',
+  rosewood: {
+    id: 'rosewood',
+    name: 'Rosewood',
+    background: '#0F0A0A',
+    dotLit: '#BA8080',
+    dotUnlit: 'rgba(186, 128, 128, 0.07)',
+    accent: '#BA8080',
+    glow: 'rgba(186, 128, 128, 0.08)',
   },
 }
 
-export const THEME_LIST: ThemeId[] = [
-  'classic',
-  'amber',
-  'ice',
-  'forest',
-  'sunset',
-  'violet',
-  'system',
-]
+/** Legacy ID to current theme mapping */
+const LEGACY_MAP: Record<string, (typeof PRIMARY_THEME_IDS)[number]> = {
+  classic: 'mono',
+  ice: 'glacier',
+  forest: 'sage',
+  sunset: 'rosewood',
+  violet: 'rosewood',
+}
 
 /**
- * Parses a hex color or RGBA string and clamps luminance for optimal readability on dark backgrounds.
+ * Converts RGB to HSL.
+ */
+export function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  const rNorm = r / 255
+  const gNorm = g / 255
+  const bNorm = b / 255
+  const max = Math.max(rNorm, gNorm, bNorm)
+  const min = Math.min(rNorm, gNorm, bNorm)
+  let h = 0
+  let s = 0
+  const l = (max + min) / 2
+
+  if (max !== min) {
+    const d = max - min
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    switch (max) {
+      case rNorm:
+        h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0)
+        break
+      case gNorm:
+        h = (bNorm - rNorm) / d + 2
+        break
+      case bNorm:
+        h = (rNorm - gNorm) / d + 4
+        break
+    }
+    h /= 6
+  }
+
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)]
+}
+
+/**
+ * Converts HSL to Hex color string.
+ */
+export function hslToHex(h: number, s: number, l: number): string {
+  const hNorm = h / 360
+  const sNorm = s / 100
+  const lNorm = l / 100
+
+  let r: number, g: number, b: number
+
+  if (sNorm === 0) {
+    r = g = b = lNorm
+  } else {
+    const hue2rgb = (p: number, q: number, t: number) => {
+      let tNorm = t
+      if (tNorm < 0) tNorm += 1
+      if (tNorm > 1) tNorm -= 1
+      if (tNorm < 1 / 6) return p + (q - p) * 6 * tNorm
+      if (tNorm < 1 / 2) return q
+      if (tNorm < 2 / 3) return p + (q - p) * (2 / 3 - tNorm) * 6
+      return p
+    }
+
+    const q = lNorm < 0.5 ? lNorm * (1 + sNorm) : lNorm + sNorm - lNorm * sNorm
+    const p = 2 * lNorm - q
+    r = hue2rgb(p, q, hNorm + 1 / 3)
+    g = hue2rgb(p, q, hNorm)
+    b = hue2rgb(p, q, hNorm - 1 / 3)
+  }
+
+  const toHex = (x: number) => {
+    const hex = Math.round(x * 255).toString(16)
+    return hex.length === 1 ? '0' + hex : hex
+  }
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase()
+}
+
+/**
+ * Parses a hex color or RGBA string and builds a refined, desaturated system theme.
  */
 export function buildSystemTheme(rawAccentHex?: string | null): ColorTheme {
-  const fallback = COLOR_THEMES.classic
+  const fallback = COLOR_THEMES.mono
   if (!rawAccentHex) {
     return {
       ...fallback,
@@ -99,47 +204,45 @@ export function buildSystemTheme(rawAccentHex?: string | null): ColorTheme {
     return { ...fallback, id: 'system', name: 'System' }
   }
 
-  let r = parseInt(clean.substring(0, 2), 16)
-  let g = parseInt(clean.substring(2, 4), 16)
-  let b = parseInt(clean.substring(4, 6), 16)
+  const r = parseInt(clean.substring(0, 2), 16)
+  const g = parseInt(clean.substring(2, 4), 16)
+  const b = parseInt(clean.substring(4, 6), 16)
 
   if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) {
     return { ...fallback, id: 'system', name: 'System' }
   }
 
-  // Calculate relative luminance (sRGB)
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  const [h, s] = rgbToHsl(r, g, b)
 
-  // Boost contrast if color is too dark for lit dots on dark backdrop
-  if (lum < 0.45) {
-    const boost = 0.45 / Math.max(0.1, lum)
-    r = Math.min(255, Math.round(r * boost + (255 - r) * 0.2))
-    g = Math.min(255, Math.round(g * boost + (255 - g) * 0.2))
-    b = Math.min(255, Math.round(b * boost + (255 - b) * 0.2))
-  }
+  // Clamp saturation to <= 50% for a calm, professional look
+  const clampedS = Math.min(50, Math.max(15, s))
+  // Target lightness ~65-75% for high contrast against dark backdrop
+  const targetL = 70
 
-  const litHex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`
-
-  // Dark background with subtle hue
-  const bgR = Math.round(r * 0.06)
-  const bgG = Math.round(g * 0.06)
-  const bgB = Math.round(b * 0.08)
-  const bgHex = `#${((1 << 24) + (bgR << 16) + (bgG << 8) + bgB).toString(16).slice(1)}`
+  const litHex = hslToHex(h, clampedS, targetL)
+  // Background tinted slightly with hue at 5% lightness
+  const bgHex = hslToHex(h, Math.min(30, clampedS), 5)
 
   return {
     id: 'system',
     name: 'System',
     background: bgHex,
     dotLit: litHex,
-    dotUnlit: `rgba(${r}, ${g}, ${b}, 0.12)`,
+    dotUnlit: `rgba(${r}, ${g}, ${b}, 0.08)`,
     accent: litHex,
-    glow: `rgba(${r}, ${g}, ${b}, 0.40)`,
+    glow: `rgba(${r}, ${g}, ${b}, 0.08)`,
   }
 }
 
-export function getTheme(themeId: ThemeId = 'classic', systemAccentHex?: string | null): ColorTheme {
+export function getTheme(themeId: ThemeId = 'mono', systemAccentHex?: string | null): ColorTheme {
   if (themeId === 'system') {
     return buildSystemTheme(systemAccentHex)
   }
-  return COLOR_THEMES[themeId] ?? COLOR_THEMES.classic
+  if (themeId in COLOR_THEMES) {
+    return COLOR_THEMES[themeId as (typeof PRIMARY_THEME_IDS)[number]]
+  }
+  if (themeId in LEGACY_MAP) {
+    return COLOR_THEMES[LEGACY_MAP[themeId]]
+  }
+  return COLOR_THEMES.mono
 }

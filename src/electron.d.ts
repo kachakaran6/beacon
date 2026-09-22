@@ -27,7 +27,19 @@ export type NotchSettings = {
   offsetPx: number
 }
 
-export type ThemeId = 'classic' | 'amber' | 'ice' | 'forest' | 'sunset' | 'violet' | 'system'
+export type ThemeId =
+  | 'mono'
+  | 'warm-white'
+  | 'amber'
+  | 'glacier'
+  | 'sage'
+  | 'rosewood'
+  | 'system'
+  | 'classic'
+  | 'ice'
+  | 'forest'
+  | 'sunset'
+  | 'violet'
 export type NotchSourceId = 'clock' | 'timer' | 'task' | 'streak' | 'companion' | 'none'
 export type NotchContentMode = 'smart' | 'cycle'
 

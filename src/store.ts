@@ -95,7 +95,7 @@ export const INITIAL_STATE: PersistedState = {
   openOnHover: true,
   autoHideNotch: false,
   notch: DEFAULT_NOTCH,
-  theme: 'classic',
+  theme: 'mono',
   notchContentMode: 'smart',
   notchSources: ['clock', 'timer'],
   notchSourceOrder: ['clock', 'timer', 'task', 'streak', 'companion'],
