@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "app:dev": "concurrently -k \"cross-env BROWSER=none vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
-    "app:build": "npm run build && electron-builder",
+    "app:build": "npm run build && electron-builder --publish never",
     "lint": "oxlint",
     "check:brand": "node scripts/check-brand.js",
     "test": "vitest run && playwright test",
