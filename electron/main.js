@@ -140,6 +140,7 @@ export function applyWindowChrome(win) {
     win.setSkipTaskbar?.(true)
     win.setAlwaysOnTop?.(true, 'floating')
     win.setMenuBarVisibility?.(false)
+    win.setContentProtection?.(false)
   } catch {
     // Ignore if window is being destroyed
   }
@@ -208,15 +209,12 @@ export async function transitionToOpen(by = 'click') {
 
   log(`[main] transitionToOpen by=${by} pillLeft=${pillLeft} originX=${pb.originX}`)
 
-  // 1. Hide briefly to swap window bounds cleanly without visual glitch
-  mainWindow.setOpacity(0)
-
-  // 2. Atomic setBounds
+  // 1. Atomic setBounds without opacity dropping (transparent window avoids visual flash)
   mainWindow.setBounds({ x: pb.x, y: pb.y, width: pb.width, height: pb.height })
   mainWindow.setFocusable(true)
   applyWindowChrome(mainWindow)
 
-  // 3. Send layout:apply and await renderer 2-rAF ack
+  // 2. Send layout:apply and await renderer 2-rAF ack
   const ackPromise = new Promise((resolve) => {
     layoutAckResolver = resolve
     setTimeout(resolve, 100) // safety fallback
@@ -232,8 +230,7 @@ export async function transitionToOpen(by = 'click') {
   await ackPromise
   layoutAckResolver = null
 
-  // 4. Reveal window at new bounds and trigger open animation
-  mainWindow.setOpacity(1)
+  // 3. Reveal window at new bounds and trigger open animation
   if (by === 'click' || by === 'shortcut') {
     mainWindow.show()
     mainWindow.focus()
@@ -245,14 +242,14 @@ export async function transitionToOpen(by = 'click') {
 
   mainWindow.webContents.send('open:start', { openedBy: by })
 
-  // 5. Allow morph animation to run (~180ms), then unlock state
+  // 4. Allow morph animation to run (~220ms), then unlock state
   setTimeout(() => {
     if (machineState === 'opening') {
       machineState = 'open'
       isTransitioning = false
       log(`[main] state -> open (by=${by})`)
     }
-  }, 200)
+  }, 220)
 }
 
 export async function transitionToClose(reason = 'user') {
@@ -284,9 +281,7 @@ export async function transitionToClose(reason = 'user') {
   await closeDonePromise
   closeDoneResolver = null
 
-  // 2. Hide briefly to swap back to collapsed notch bounds
-  mainWindow.setOpacity(0)
-
+  // 2. Swap back to collapsed notch bounds without opacity flash
   const nb = getNotchBounds(false)
   mainWindow.setBounds({ x: nb.x, y: nb.y, width: nb.width, height: nb.height })
   mainWindow.setFocusable(false)
@@ -309,7 +304,6 @@ export async function transitionToClose(reason = 'user') {
   layoutAckResolver = null
 
   // 4. Reveal collapsed notch
-  mainWindow.setOpacity(1)
   mainWindow.showInactive()
   applyWindowChrome(mainWindow)
 
@@ -467,7 +461,6 @@ function createWindow() {
     y: nb.y,
     width: nb.width,
     height: nb.height,
-    type: 'toolbar', // WS_EX_TOOLWINDOW: prevents Windows taskbar button and Alt+Tab
     skipTaskbar: true,
     icon: getIcon(),
     frame: false,

@@ -363,10 +363,10 @@ test.describe.serial('Beacon Electron E2E Tests', () => {
       })
 
       await window.evaluate(() => window.beacon?.test?.expand('click'))
-      await window.waitForTimeout(200)
+      await window.waitForTimeout(300)
 
       await window.evaluate(() => window.beacon?.test?.collapse())
-      await window.waitForTimeout(200)
+      await window.waitForTimeout(300)
 
       const after = await window.evaluate(() => {
         const notch = document.querySelector('.notch')

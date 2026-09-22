@@ -2,12 +2,13 @@ import { describe, it, expect, vi } from 'vitest'
 import { applyWindowChrome } from '../electron/main'
 
 describe('Window Chrome and Taskbar Suppression (Bug 1)', () => {
-  it('applyWindowChrome sets skipTaskbar, floating alwaysOnTop, and hides menu bar', () => {
+  it('applyWindowChrome sets skipTaskbar, floating alwaysOnTop, hides menu bar, and allows screen capture', () => {
     const mockWin = {
       isDestroyed: vi.fn().mockReturnValue(false),
       setSkipTaskbar: vi.fn(),
       setAlwaysOnTop: vi.fn(),
       setMenuBarVisibility: vi.fn(),
+      setContentProtection: vi.fn(),
     }
 
     applyWindowChrome(mockWin as any)
@@ -15,6 +16,7 @@ describe('Window Chrome and Taskbar Suppression (Bug 1)', () => {
     expect(mockWin.setSkipTaskbar).toHaveBeenCalledWith(true)
     expect(mockWin.setAlwaysOnTop).toHaveBeenCalledWith(true, 'floating')
     expect(mockWin.setMenuBarVisibility).toHaveBeenCalledWith(false)
+    expect(mockWin.setContentProtection).toHaveBeenCalledWith(false)
   })
 
   it('safely ignores destroyed window instances without throwing', () => {
