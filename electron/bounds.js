@@ -9,6 +9,47 @@ export const PANEL_DEFAULT_WIDTH = 960
 export const PANEL_DEFAULT_HEIGHT = 420
 export const DISPLAY_MARGIN = 8
 
+export const NOTCH_CORNER_RADIUS = 15
+export const PANEL_CORNER_RADIUS = 28
+export const NOTCH_AUTOHIDE_RADIUS = 2
+
+/**
+ * Computes polygon path vertices for top-flat, bottom-rounded notch/panel window at a specific DPI.
+ */
+export function computeWindowShapeVertices(width, height, radius, dpi = 1.0) {
+  const w = Math.round(width * dpi)
+  const h = Math.round(height * dpi)
+  const r = Math.min(Math.round(radius * dpi), Math.floor(h), Math.floor(w / 2))
+
+  const points = [
+    { x: 0, y: 0 },
+    { x: w, y: 0 },
+    { x: w, y: h - r },
+  ]
+
+  // Bottom-right arc from angle 0 (right edge) to PI/2 (bottom edge)
+  const arcSegments = 4
+  for (let i = 1; i <= arcSegments; i++) {
+    const angle = (Math.PI / 2) * (i / arcSegments)
+    points.push({
+      x: Math.round(w - r + Math.cos(angle) * r),
+      y: Math.round(h - r + Math.sin(angle) * r),
+    })
+  }
+
+  // Bottom-left arc from angle PI/2 (bottom edge) to PI (left edge)
+  for (let i = 1; i <= arcSegments; i++) {
+    const angle = Math.PI / 2 + (Math.PI / 2) * (i / arcSegments)
+    points.push({
+      x: Math.round(r + Math.cos(angle) * r),
+      y: Math.round(h - r + Math.sin(angle) * r),
+    })
+  }
+
+  points.push({ x: 0, y: 0 })
+  return points
+}
+
 export function computeNotchBounds(display, notchSettings = {}, size = { width: NOTCH_WIDTH, height: NOTCH_HEIGHT }) {
   if (!display || !display.bounds) {
     throw new Error('Valid display with bounds is required')
