@@ -21,12 +21,16 @@ async function generate() {
 
   const sizes = [16, 24, 32, 48, 64, 128, 256, 512]
   const pngBuffers = []
+  const iconsDir = path.join(buildDir, 'icons')
+  fs.mkdirSync(iconsDir, { recursive: true })
 
   for (const size of sizes) {
     const pngBuffer = await sharp(inputBuffer)
       .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .png()
       .toBuffer()
+
+    fs.writeFileSync(path.join(iconsDir, `${size}x${size}.png`), pngBuffer)
 
     if (size === 256) {
       fs.writeFileSync(path.join(buildDir, 'icon-256.png'), pngBuffer)

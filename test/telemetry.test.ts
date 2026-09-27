@@ -67,6 +67,15 @@ describe('Telemetry Payload Builder', () => {
       osRelease: '10.0.22621',
     })
     expect(win11.os).toBe('win11')
+
+    const linux = buildTelemetryPayload({
+      installId: 'anon-linux',
+      event: 'launch',
+      appVersion: '1.0.0',
+      platform: 'linux',
+      osRelease: '6.5.0-generic',
+    })
+    expect(linux.os).toBe('linux')
   })
 
   it('throws when required fields are missing', () => {
@@ -210,9 +219,22 @@ describe('Worker validatePingPayload', () => {
       installId: '123e4567-e89b-12d3-a456-426614174000',
       event: 'launch',
       appVersion: '1.0.0',
-      os: 'linux',
+      os: 'solaris',
       arch: 'x64',
     })
     expect(badOs.valid).toBe(false)
+  })
+
+  it('accepts linux os in ping payload', () => {
+    const validLinux = validatePingPayload({
+      v: 1,
+      installId: '123e4567-e89b-12d3-a456-426614174000',
+      event: 'launch',
+      appVersion: '1.0.0',
+      os: 'linux',
+      arch: 'x64',
+    })
+    expect(validLinux.valid).toBe(true)
+    expect(validLinux.data?.os).toBe('linux')
   })
 })

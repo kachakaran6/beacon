@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-09-27
+
+### Added
+- **Linux Platform Support**: Full compatibility for Linux desktops (Ubuntu, Debian, Linux Mint, Fedora, Arch, KDE Plasma).
+- **Linux Packages**: Automated packaging for universal standalone `.AppImage` and Debian `.deb` installers.
+- **Multi-Resolution Linux Icon Set**: Pre-rendered icons from 16x16 up to 512x512 for Linux desktop launchers and docks.
+- **X11 / XWayland Desktop Dock Integration**: Window type and transparent visual flags for seamless frameless floating island behavior.
+- **Multi-Platform CI/CD**: Automated parallel GitHub Actions matrix building and publishing Windows and Linux binaries.
+
 ## [1.0.0] - 2026-09-22
 
 ### Added

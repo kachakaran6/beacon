@@ -28,7 +28,7 @@ export function validatePingPayload(body) {
     return { valid: false, error: 'Invalid appVersion' }
   }
 
-  if (os !== 'win10' && os !== 'win11') {
+  if (os !== 'win10' && os !== 'win11' && os !== 'linux') {
     return { valid: false, error: 'Invalid os type' }
   }
 

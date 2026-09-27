@@ -10,7 +10,17 @@ permissions:
 
 jobs:
   publish:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+            builder_args: --win
+          - os: ubuntu-latest
+            platform: linux
+            builder_args: --linux AppImage deb
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,7 +34,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify Tag Matches package.json Version
+      - name: Verify Tag Matches package.json Version (Windows)
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $pkg = Get-Content package.json | ConvertFrom-Json
@@ -36,6 +47,19 @@ jobs:
             exit 1
           }
           Write-Host "Version validation successful: $tag"
+
+      - name: Verify Tag Matches package.json Version (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          pkg_ver=$(node -p "require('./package.json').version")
+          tag="${{ github.ref_name }}"
+          expected="v${pkg_ver}"
+          echo "Checking tag '$tag' against expected tag '$expected'..."
+          if [ "$tag" != "$expected" ]; then
+            echo "Release tag '$tag' does not match package.json version '$expected'"
+            exit 1
+          fi
+          echo "Version validation successful: $tag"
 
       - name: Unit Tests
         run: npx vitest run
@@ -52,4 +76,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BEACON_TELEMETRY_URL: ${{ vars.BEACON_TELEMETRY_URL }}
-        run: npx electron-builder --win --publish always
+        run: npx electron-builder ${{ matrix.builder_args }} --publish always

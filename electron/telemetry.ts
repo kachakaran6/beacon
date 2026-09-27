@@ -6,7 +6,7 @@ export interface TelemetryPayload {
   installId: string
   event: 'install' | 'launch'
   appVersion: string
-  os: 'win10' | 'win11'
+  os: 'win10' | 'win11' | 'linux'
   arch: string
   locale: string
 }
@@ -30,7 +30,7 @@ export function buildTelemetryPayload({
     throw new Error('installId, event, and appVersion are required')
   }
 
-  let osTag: 'win10' | 'win11' = 'win10'
+  let osTag: 'win10' | 'win11' | 'linux' = 'win10'
   if (platform === 'win32') {
     const buildMatch = osRelease.match(/(\d+)\.(\d+)\.(\d+)/)
     if (buildMatch && parseInt(buildMatch[3], 10) >= 22000) {
@@ -38,6 +38,8 @@ export function buildTelemetryPayload({
     } else {
       osTag = 'win10'
     }
+  } else if (platform === 'linux') {
+    osTag = 'linux'
   }
 
   return {

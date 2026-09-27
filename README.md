@@ -1,13 +1,13 @@
 <div align="center">
   <img src="build/icon-256.png" width="120" height="120" alt="Beacon Logo" />
   <h1>Beacon</h1>
-  <p><b>Glanceable, low-distraction desktop focus notch & Pomodoro timer for Windows 10 and 11.</b></p>
+  <p><b>Glanceable, low-distraction desktop focus notch & Pomodoro timer for Windows and Linux.</b></p>
 
   <p>
     <a href="https://github.com/kachakaran6/beacon/releases"><img src="https://img.shields.io/github/v/release/kachakaran6/beacon?style=flat-square&color=blue" alt="Latest Release" /></a>
     <a href="https://github.com/kachakaran6/beacon/releases"><img src="https://img.shields.io/github/downloads/kachakaran6/beacon/total?style=flat-square&color=2ea44f" alt="Total Downloads" /></a>
     <a href="https://github.com/kachakaran6/beacon/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/kachakaran6/beacon/ci.yml?branch=main&style=flat-square&label=CI" alt="CI Status" /></a>
-    <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg?style=flat-square" alt="Platform: Windows 10/11" />
+    <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-0078D6.svg?style=flat-square" alt="Platform: Windows | Linux" />
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-informational.svg?style=flat-square" alt="License: MIT" /></a>
   </p>
 </div>
@@ -16,7 +16,7 @@
 
 ## 🌟 Overview
 
-**Beacon** is a minimalist, frameless desktop notch inspired by the Dynamic Island, engineered specifically for Windows 10 and 11. It anchors your current priority task, active Pomodoro session, and notes to the edge of your screen without stealing focus or interrupting your flow.
+**Beacon** is a minimalist, frameless desktop notch inspired by the Dynamic Island, engineered for Windows and Linux. It anchors your current priority task, active Pomodoro session, and notes to the edge of your screen without stealing focus or interrupting your flow.
 
 - **Stay anchored**: Keep your primary goal visible without opening heavy project management windows.
 - **Configurable placement**: Dock anywhere along your screen (Left, Center, Right) across multiple monitors so it never obscures browser tabs or window controls.
@@ -68,14 +68,26 @@
 
 Download the latest release from the [GitHub Releases Page](https://github.com/kachakaran6/beacon/releases/latest).
 
-### Options:
-1. **Installer (`Beacon-Setup-1.0.0.exe`)**:
+### Windows:
+1. **Installer (`Beacon-Setup-<version>.exe`)**:
    - Standard per-user NSIS installer (no Administrator permissions required).
    - Installs to `%LOCALAPPDATA%\Programs\Beacon`.
-   - Creates Start Menu and Desktop shortcuts.
-   - Supports background auto-updating.
-2. **Portable (`Beacon-1.0.0-portable.exe`)**:
-   - Single standalone executable. Runs immediately without installation.
+   - Creates Start Menu and Desktop shortcuts with background auto-updating.
+2. **Portable (`Beacon-<version>-portable.exe`)**:
+   - Standalone executable. Runs immediately without installation.
+
+### Linux:
+1. **AppImage (`Beacon-<version>.AppImage`)**:
+   - Universal standalone Linux package across all modern distributions.
+   - Run `chmod +x Beacon-<version>.AppImage && ./Beacon-<version>.AppImage`.
+2. **Debian / Ubuntu (`Beacon-<version>.deb`)**:
+   - Debian package for Ubuntu, Debian, Linux Mint, Pop!_OS.
+   - Install via `sudo dpkg -i Beacon-<version>.deb` or double-click to install via Software Center.
+
+> [!TIP]
+> **Linux Desktop Prerequisites**:
+> - **GNOME Users**: Install `gnome-shell-extension-appindicator` for system tray controls.
+> - **Window Compositing**: If using tiling window managers (`i3`, `bspwm`), ensure a compositor like `picom` is active for transparent frameless window rendering.
 
 > [!IMPORTANT]
 > **Windows SmartScreen Notice**: Because Beacon is an open-source community application without an expensive EV code-signing certificate, Windows SmartScreen may display an *"Unrecognized app"* warning on initial launch. Click **More info** &rarr; **Run anyway** to proceed.
@@ -138,7 +150,7 @@ Read the full [PRIVACY.md](PRIVACY.md) policy for detailed guarantees.
 ### Prerequisites
 - Node.js 20.x or higher
 - npm 10.x or higher
-- Windows 10/11 operating system
+- Windows 10/11 or Linux (Ubuntu, Debian, Fedora, Arch, etc.)
 
 ### Setup & Run
 ```bash
@@ -184,7 +196,7 @@ npm run release:patch   # or release:minor / release:major
 git push origin main --follow-tags
 ```
 
-The GitHub Actions workflow will validate the version tag, run all test suites, compile the Windows binaries, and publish the release with `Beacon-Setup-<version>.exe`, `Beacon-<version>-portable.exe`, and update blockmaps.
+The GitHub Actions workflow will validate the version tag, run all test suites, compile both Windows (`.exe`) and Linux (`.AppImage`, `.deb`) binaries across a parallel build matrix, and publish the release with update blockmaps.
 
 ---
 

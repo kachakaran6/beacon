@@ -26,13 +26,24 @@ try {
   // Safe fallback in test environments
 }
 
+// Enable transparent visuals on Linux X11/XWayland compositors
+if (process.platform === 'linux') {
+  try {
+    app?.commandLine?.appendSwitch?.('enable-transparent-visuals')
+  } catch {
+    // Safe fallback in test environments
+  }
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isDev = Boolean(app && !app.isPackaged)
 const isTest = process.env.BEACON_TEST === '1'
 const isPortable = Boolean(process.env.PORTABLE_EXECUTABLE_DIR || process.env.PORTABLE_EXECUTABLE_FILE)
 
 // ─── Logging ──────────────────────────────────────────────────────────────────
-const logBase = app?.getPath ? app.getPath('appData') : (process.env.APPDATA || path.join(process.cwd(), 'logs'))
+const logBase = app?.getPath
+  ? app.getPath('appData')
+  : (process.env.APPDATA || (process.platform === 'linux' ? path.join(process.env.HOME || '~', '.config') : path.join(process.cwd(), 'logs')))
 const logDir = path.join(logBase, 'Beacon', 'logs')
 let logStream = null
 
@@ -116,6 +127,13 @@ if (app?.requestSingleInstanceLock) {
 // ─── Display & Icon Helpers ──────────────────────────────────────────────────
 export function getIconPath() {
   const baseAppPath = app?.getAppPath ? app.getAppPath() : process.cwd()
+  if (process.platform === 'linux') {
+    const devPng = path.join(baseAppPath, 'build', 'icon.png')
+    if (fs.existsSync(devPng)) return devPng
+    const resPng = path.join(process.resourcesPath || '', 'build', 'icon.png')
+    if (fs.existsSync(resPng)) return resPng
+    return path.join(baseAppPath, 'public', 'icon.png')
+  }
   const devPath = path.join(baseAppPath, 'build', 'icon.ico')
   if (fs.existsSync(devPath)) return devPath
   const resPath = path.join(process.resourcesPath || '', 'build', 'icon.ico')
@@ -138,7 +156,11 @@ export function applyWindowChrome(win) {
   if (!win || win.isDestroyed?.()) return
   try {
     win.setSkipTaskbar?.(true)
-    win.setAlwaysOnTop?.(true, 'screen-saver')
+    try {
+      win.setAlwaysOnTop?.(true, 'screen-saver')
+    } catch {
+      win.setAlwaysOnTop?.(true)
+    }
     win.setMenuBarVisibility?.(false)
     win.setVisibleOnAllWorkspaces?.(true, { visibleOnFullScreen: true })
   } catch {
@@ -469,6 +491,7 @@ function resetAutoHideTimer() {
 // ─── Create Main Notch Window ─────────────────────────────────────────────────
 function createWindow() {
   const nb = getNotchBounds(false)
+  const isLinux = process.platform === 'linux'
 
   mainWindow = new BrowserWindow({
     x: nb.x,
@@ -476,6 +499,7 @@ function createWindow() {
     width: nb.width,
     height: nb.height,
     skipTaskbar: true,
+    type: isLinux ? 'toolbar' : undefined,
     icon: getIcon(),
     frame: false,
     transparent: true,
@@ -722,6 +746,7 @@ if (app?.whenReady) {
     try {
       app.setLoginItemSettings({
         openAtLogin: Boolean(store.get('launchAtStartup')),
+        path: process.env.APPIMAGE || process.execPath,
         args: ['--hidden'],
       })
     } catch (err) {
@@ -994,7 +1019,11 @@ if (typeof ipcMain !== 'undefined' && ipcMain && typeof ipcMain.handle === 'func
   ipcMain.handle('startup:set', (_event, enabled) => {
     try {
       store.set('launchAtStartup', Boolean(enabled))
-      app.setLoginItemSettings({ openAtLogin: Boolean(enabled), args: ['--hidden'] })
+      app.setLoginItemSettings({
+        openAtLogin: Boolean(enabled),
+        path: process.env.APPIMAGE || process.execPath,
+        args: ['--hidden'],
+      })
       return true
     } catch (err) {
       logError('startup:set', err)

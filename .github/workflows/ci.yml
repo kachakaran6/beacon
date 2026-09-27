@@ -6,7 +6,11 @@ on:
 
 jobs:
   test-and-build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,4 +36,11 @@ jobs:
       - name: Build App
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run app:build
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            npm run app:build:win
+          else
+            npm run app:build:linux
+          fi
+        shell: bash
+

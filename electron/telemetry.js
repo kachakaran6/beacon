@@ -28,7 +28,7 @@ export function buildTelemetryPayload({
     throw new Error('installId, event, and appVersion are required')
   }
 
-  // Detect Windows 10 vs 11 (Windows 11 build number >= 22000)
+  // Detect Windows 10 vs 11 (Windows 11 build number >= 22000) or Linux
   let osTag = 'win10'
   if (platform === 'win32') {
     const buildMatch = osRelease.match(/(\d+)\.(\d+)\.(\d+)/)
@@ -37,6 +37,8 @@ export function buildTelemetryPayload({
     } else {
       osTag = 'win10'
     }
+  } else if (platform === 'linux') {
+    osTag = 'linux'
   }
 
   return {

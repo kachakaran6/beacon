@@ -26,7 +26,7 @@ Beacon includes an optional, privacy-first anonymous telemetry system to help ma
   - `installId`: A randomly generated UUID (e.g. `e0a3f9e2-...`)
   - `event`: Either `"install"` (sent once on initial setup) or `"launch"` (sent at most once per 24-hour period)
   - `appVersion`: The version of Beacon currently installed (e.g. `1.0.0`)
-  - `os`: Coarse Windows version (`win10` or `win11`)
+  - `os`: Coarse OS version (`win10`, `win11`, or `linux`)
   - `arch`: System architecture (`x64` or `arm64`)
   - `locale`: Language locale code (e.g. `en-US`)
 

@@ -779,7 +779,7 @@ export default function App() {
                 <div className="consent-text">
                   <ShieldIcon size={14} strokeWidth={1.75} className="consent-icon" />
                   <span>
-                    Help improve Beacon: share anonymous usage stats (a random ID, app version and Windows version). No personal data or content.
+                    Help improve Beacon: share anonymous usage stats (a random ID, app version and OS version). No personal data or content.
                   </span>
                 </div>
                 <div className="consent-actions">
@@ -2017,7 +2017,7 @@ function SettingsTab({ showToast }: { showToast: (m: string) => void }) {
 
           <div className="setting-row">
             <div className="setting-text">
-              <span className="setting-title">Launch at Windows startup</span>
+              <span className="setting-title">Launch at system startup</span>
               <span className="setting-desc">Start Beacon minimized on login</span>
             </div>
             <button
