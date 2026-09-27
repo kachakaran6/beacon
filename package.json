@@ -3,7 +3,15 @@
   "private": true,
   "version": "2.1.7",
   "description": "A glanceable desktop productivity island for Windows and Linux",
-  "author": "kachakaran6",
+  "author": {
+    "name": "kachakaran6",
+    "email": "kachakaran06@gmail.com"
+  },
+  "homepage": "https://github.com/kachakaran6/beacon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kachakaran6/beacon.git"
+  },
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
@@ -79,6 +87,7 @@
       "artifactName": "Beacon-${version}-portable.${ext}"
     },
     "linux": {
+      "maintainer": "kachakaran6 <kachakaran06@gmail.com>",
       "target": [
         {
           "target": "AppImage",
@@ -99,10 +108,7 @@
       "description": "Glanceable desktop productivity island and Pomodoro timer"
     },
     "deb": {
-      "artifactName": "Beacon-${version}.${ext}",
-      "depends": [
-        "libappindicator3-1 | libayatana-appindicator3-1"
-      ]
+      "artifactName": "Beacon-${version}.${ext}"
     },
     "appImage": {
       "artifactName": "Beacon-${version}.${ext}"
