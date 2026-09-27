@@ -95,13 +95,7 @@
       "category": "Utility",
       "icon": "build/icon.png",
       "synopsis": "Glanceable desktop productivity island",
-      "description": "Glanceable desktop productivity island and Pomodoro timer",
-      "desktop": {
-        "Name": "Beacon",
-        "Comment": "Glanceable desktop productivity island",
-        "Categories": "Utility;Office;",
-        "StartupWMClass": "beacon"
-      }
+      "description": "Glanceable desktop productivity island and Pomodoro timer"
     },
     "deb": {
       "artifactName": "Beacon-${version}.${ext}",
