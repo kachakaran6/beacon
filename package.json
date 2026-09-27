@@ -1,7 +1,7 @@
 {
   "name": "beacon",
   "private": true,
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "A glanceable desktop productivity island for Windows and Linux",
   "author": {
     "name": "kachakaran6",
