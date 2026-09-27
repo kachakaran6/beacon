@@ -98,6 +98,19 @@ jobs:
           BEACON_TELEMETRY_URL: ${{ vars.BEACON_TELEMETRY_URL }}
         run: npm run build
 
+      - name: Diagnostics
+        run: |
+          echo "=== Node version ==="
+          node --version
+          echo "=== electron-builder version ==="
+          npx electron-builder --version
+          echo "=== app-builder cache ==="
+          ls ~/.cache/electron-builder/ 2>/dev/null || echo "No cache dir"
+          echo "=== Build icons ==="
+          ls build/icons/
+          echo "=== package.json build.linux ==="
+          node -p "JSON.stringify(require('./package.json').build.linux, null, 2)"
+
       - name: Build and Publish Linux Artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
