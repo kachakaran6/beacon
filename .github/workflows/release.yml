@@ -116,4 +116,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BEACON_TELEMETRY_URL: ${{ vars.BEACON_TELEMETRY_URL }}
           DEBUG: electron-builder
-        run: npx electron-builder --linux AppImage deb --publish always
+        run: |
+          npx electron-builder --linux AppImage deb --publish always 2>&1 | tee /tmp/eb-output.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload build log on failure
+        if: failure()
+        run: |
+          echo "## electron-builder output" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/eb-output.txt >> $GITHUB_STEP_SUMMARY
