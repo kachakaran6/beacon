@@ -33,6 +33,12 @@ jobs:
       - name: Unit & Store Tests
         run: npx vitest run
 
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fuse libfuse2 || sudo apt-get install -y fuse libfuse2t64
+
       - name: Build App
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
